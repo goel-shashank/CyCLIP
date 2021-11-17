@@ -1,0 +1,27 @@
+use_gpu: True
+embedding_dim: 300
+
+MultiModalLoss:
+    temperature: 0.5
+    alphas: $DIR/files/alphas.csv
+
+Modality: 
+    text:
+        class: TextEncoder
+        vocab_size: 1000
+        context_size: 25
+        embed_dim: 100
+        hidden_dim: 100
+        num_heads: 2
+        num_layers: 2
+
+    image:
+        class: ImageEncoder
+        input_dim: 64
+        in_channels: 3
+        out_channels: 100
+        patch_size: 4
+        embed_dim: 100
+        hidden_dim: 100
+        num_heads: 4
+        num_layers: 2
