@@ -1,6 +1,3 @@
-# Temp
-test.ipynb
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -11,6 +8,9 @@ __pycache__/
 
 # Distribution / packaging
 .Python
+data/
+logs/
+wandb/
 build/
 develop-eggs/
 dist/

@@ -1,3 +1,28 @@
 name: mint
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
 dependencies:
-- pip
+  - einops
+  - ftfy
+  - matplotlib
+  - numpy
+  - omegaconf
+  - pandas
+  - pillow
+  - pip
+  - pyflakes
+  - pytorch_lightning
+  - regex
+  - tensorflow
+  - tokenizers
+  - torchvision
+  - tqdm
+  - transformers
+  - pip:
+    - h5py
+    - wandb
+    - wrapt
+    - git+https://github.com/openai/CLIP.git
+    - git+https://github.com/modestyachts/ImageNetV2_pytorch
