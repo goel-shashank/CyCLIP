@@ -104,7 +104,6 @@ def df_from_shelve(chunk_size, func, dataset_name):
         df = pd.concat([results[str(k)][1] for k in keylist], sort=True)
     return df
 
-
 def run_download(num_processes = 32, images_per_part = 100, data_name = 'validation', dir_path = ".", filename = 'Validation_GCC-1.1.0-Validation.tsv'):
 
     filepath = f'{dir_path}/{filename}'
