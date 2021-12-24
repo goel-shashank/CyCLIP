@@ -112,7 +112,7 @@ def worker(rank, options):
 
     if(data["train"] is not None):
         # start training
-        best_validation_loss = np.inf
+        best_loss = np.inf
         for epoch in range(start_epoch + 1, options.epochs + 1):
             if(options.master):
                 logging.info(f"Start Epoch {epoch}")
@@ -124,9 +124,9 @@ def worker(rank, options):
             if(options.master):
                 checkpoint = {"epoch": epoch, "name": options.name, "state_dict": model.state_dict(), "optimizer": optimizer.state_dict()}
                 torch.save(checkpoint, os.path.join(options.checkpoint_path, f"epoch_{epoch}.pt"))
-                if("validation_loss" in metrics):
-                    if(metrics["validation_loss"] < best_validation_loss):
-                        best_validation_loss = metrics["validation_loss"]
+                if("loss" in metrics):
+                    if(metrics["loss"] < best_loss):
+                        best_loss = metrics["loss"]
                         torch.save(checkpoint, os.path.join(options.checkpoint_path, f"epoch_{epoch}.best.pt"))
 
     # finish wandb
@@ -136,7 +136,7 @@ def worker(rank, options):
 def main():
     options = parse_args()
 
-    shutil.rmtree(options.logs)
+    shutil.rmtree(options.logs, ignore_errors = True)
 
     if(options.name is None):
         options.name = time.strftime(f"date=%Y-%m-%d-%H-%M-%S", time.gmtime())
@@ -150,12 +150,13 @@ def main():
         print("Experiment already exists; use --name to specify an experiment identifier")
         sys.exit()
 
-    options.logger = get_logger(options.log_path, options.log_level)
+    options.logger, options.listener = get_logger(options.log_path, options.log_level)
 
     options.checkpoint_path = os.path.join(options.logs, options.name, "checkpoints")
     os.makedirs(options.checkpoint_path, exist_ok = True)
 
     options.ngpus = torch.cuda.device_count()
+    print(options.ngpus)
 
     if(options.ngpus == 0 or options.device == "cpu"):
         options.device = "cpu"
@@ -173,6 +174,8 @@ def main():
             options.ndevices = options.ngpus
             options.distributed = True
             torch.multiprocessing.spawn(worker, nprocs = options.ngpus, args = (options))
-
+    
+    options.listener.stop()
+    
 if(__name__ == "__main__"):
     main()

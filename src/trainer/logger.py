@@ -17,13 +17,13 @@ def set_logger(rank, logger, log_level, distributed):
     queue_handler = QueueHandler(logger)
     queue_handler.addFilter(LogFilter(rank, distributed))
     queue_handler.setLevel(log_level)
+    queue_handler.flush()
 
     logger = logging.getLogger()
     logger.addHandler(queue_handler)
     logger.setLevel(log_level)
 
 def get_logger(log_file, log_level):
-    torch.multiprocessing.set_start_method("spawn")
     logger = torch.multiprocessing.Queue(-1)
 
     formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s", datefmt = "%Y-%m-%d,%H:%M:%S")
@@ -36,8 +36,7 @@ def get_logger(log_file, log_level):
     stream_handler.setFormatter(formatter)
     stream_handler.setLevel(log_level)
 
-    queue_listener = QueueListener(logger, file_handler, stream_handler)
-    queue_listener.start()
+    listener = QueueListener(logger, file_handler, stream_handler)
+    listener.start()
 
-    return logger
-
+    return logger, listener
