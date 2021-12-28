@@ -4,8 +4,15 @@ import requests
 import zlib
 import os
 import shelve
+from PIL import Image
+from io import BytesIO
 from multiprocessing import Pool
 from tqdm import tqdm
+from torchvision import transforms as T
+
+
+transform = T.Compose([T.Resize(224, interpolation = T.InterpolationMode.BICUBIC), 
+                        T.CenterCrop(224)])
 
 def _df_split_apply(tup_arg):
     split_ind, subset, func = tup_arg
@@ -38,7 +45,7 @@ def df_multiprocess(df, processes, chunk_size, func, dataset_name):
 
 # Unique name based on url
 def _file_name(row):
-    return "%s/%s_%s" % (row['folder'], row.name, (zlib.crc32(row['url'].encode('utf-8')) & 0xffffffff))
+    return "%s/%s_%s.png" % (row['folder'], row.name, (zlib.crc32(row['url'].encode('utf-8')) & 0xffffffff))
 
 # Don't download image, just check with a HEAD request, can't resume.
 # Can use this instead of download_image to get HTTP status codes.
@@ -78,10 +85,14 @@ def download_image(row):
         
     if response.ok:
         try:
-            with open(fname, 'wb') as out_file:
-                # some sites respond with gzip transport encoding
-                response.raw.decode_content = True
-                out_file.write(response.content)
+            response.raw.decode_content = True 
+            img = Image.open(BytesIO(responses.content)).convert('RGB')
+            img = transform(img)
+            img.save(fname)
+            # with open(fname, 'wb') as out_file:
+            #     # some sites respond with gzip transport encoding
+            #     response.raw.decode_content = True
+            #     out_file.write(response.content)
             row['size'] = os.stat(fname).st_size
         except:
             # This is if it times out during a download or decode
