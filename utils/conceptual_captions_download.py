@@ -110,7 +110,7 @@ def open_tsv(fname, folder):
 
 def df_from_shelve(chunk_size, func, dataset_name):
     print("Generating Dataframe from results...")
-    with shelve.open('%s_%s_%s_results.tmp' % (dataset_name, func.__name__, chunk_size)) as results:
+    with shelve.open('%s/%s_%s_%s_results.tmp' % (dir_path, dataset_name, func.__name__, chunk_size)) as results:
         keylist = sorted([int(k) for k in results.keys()])
         df = pd.concat([results[str(k)][1] for k in keylist], sort=True)
     return df

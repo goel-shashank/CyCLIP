@@ -19,11 +19,11 @@ dependencies:
   - tokenizers
   - torchvision
   - tqdm
-  - transformers
   - pip:
     - h5py
     - pytorch_lightning
     - wandb
     - wrapt
+    - transformers
     - git+https://github.com/openai/CLIP.git
     - git+https://github.com/modestyachts/ImageNetV2_pytorch
