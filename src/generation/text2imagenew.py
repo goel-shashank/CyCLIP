@@ -1,9 +1,10 @@
-import clip
-import numpy as np
-import torch
-import pandas as pd
 import os
+import sys
+import clip
+import torch
 import argparse
+import pandas as pd
+import numpy as np
 from PIL import Image
 from tqdm import tqdm
 from matplotlib import pyplot as plt
@@ -202,7 +203,11 @@ def generate_and_save(model, mname, root, prompts):
         if prompt in alr_captions:
             continue
 
-        image = model.generate_and_select(prompt)
+        try:
+          image = model.generate_and_select(prompt)
+        except:
+          print(sys.exc_info()[2])
+          continue
 
         file_loc = f'{root}/generated_{mname}_images/{pindex}.png'
         im = Image.fromarray(image)
@@ -215,6 +220,10 @@ def generate_and_save(model, mname, root, prompts):
             'image': images_loc}
             
     df = pd.DataFrame(data)
+
+    if os.path.exists(fname):
+      df = dtf.append(df)
+      
     df.to_csv(fname)
     print('Generation complete!')
 
