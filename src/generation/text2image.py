@@ -1,13 +1,21 @@
 from matplotlib import pyplot as plt
 import clip
-from models import Dalle
-from utils.utils import set_seed, clip_score
+from .models import Dalle
+from .utils.utils import set_seed, clip_score
 import numpy as np
 import torch
 import pandas as pd
 from tqdm import tqdm
 import os
 from PIL import Image
+import argparse
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument("--root", type = str, default = None, help = "Path where generated images folder is created")
+parser.add_argument("--prompt_file", type = str, default = None, help = "Path where prompt file is saved")
+
+args = parser.parse_args()
 
 class minDALLE:
     def __init__(self, device = None):
@@ -41,23 +49,44 @@ class minDALLE:
 
 
 def generate_and_save(dalle, root, prompts, num_images = 8, select_num_images = 1):
-    os.makedirs(f'{root}/generated_images/', exist_ok = True)
+    
+    os.makedirs(f'{root}/generated_mindalle_images/', exist_ok = True)
+    fname = f'{root}/image_mindalle_gen.csv'
+    
+    alr_captions = set()
+    if os.path.exists(fname):
+      dtf = pd.read_csv(fname, usecols = ['captions'])
+      alr_captions = set(dtf['captions'])
+      
     images_loc = []
     for pindex, prompt in tqdm(enumerate(prompts)):
+      if prompt in alr_captions:
+        continue
       images = dalle.generate_and_select(prompt, num_images, select_num_images)
       loc = ""
       for index, image in enumerate(images):
-        file_loc = f'{root}/generated_images/{pindex}_{index}.png'
+        file_loc = f'{root}/generated_mindalle_images/{pindex}_{index}.png'
         im = Image.fromarray((image * 255).astype(np.uint8))
         im.save(file_loc)
         loc = file_loc if not index else f'{loc},{file_loc}'
       images_loc.append(loc)
     data = {'captions': prompts,
-            'file': images_loc}
+            'image': images_loc}
     df = pd.DataFrame(data)
-    df.to_csv(f'{root}/image_gen.csv')
+    df.to_csv(fname)
     print('Generation complete!')
 
+
+def main():
+
+  model = minDALLE()
+  
+  dtf = pd.read_csv(args.prompt_file, usecols = ['captions'])
+  prompts = dtf['captions']
+  generate_and_save(model, args.root, prompts)
+
+if __name__ == '__main__':
+  main()
 
 '''
 USAGE
