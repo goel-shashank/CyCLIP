@@ -10,11 +10,13 @@ from matplotlib import pyplot as plt
 from .models import Dalle
 from .utils.utils import set_seed, clip_score
 from glide_text2im.download import load_checkpoint
+from glide_text2im.clip.model_creation import create_clip_model
 from glide_text2im.model_creation import (
     create_model_and_diffusion,
     model_and_diffusion_defaults,
     model_and_diffusion_defaults_upsampler
 )
+from glide_text2im.tokenizer.simple_tokenizer import SimpleTokenizer
 
 parser = argparse.ArgumentParser()
 
@@ -127,6 +129,62 @@ class glide_filtered:
     reshaped = scaled.permute(2, 0, 3, 1).reshape([samples.shape[2], -1, 3])
     return reshaped.numpy()
 
+
+class clip_guided:
+
+  def __init__(self, device = None):
+
+    has_cuda = torch.cuda.is_available()
+    if(device is None):
+      self.device = torch.device("cuda" if has_cuda else "cpu")
+    else:
+      self.device = device
+
+    # Create base model.
+    self.options = model_and_diffusion_defaults()
+    self.options['use_fp16'] = has_cuda
+    self.options['timestep_respacing'] = '100' # use 100 diffusion steps for fast sampling
+    self.model, self.diffusion = create_model_and_diffusion(**self.options)
+    self.model.eval()
+    if has_cuda:
+        self.model.convert_to_fp16()
+    self.model.to(device = self.device)
+    self.model.load_state_dict(load_checkpoint('base', self.device))
+
+    # Create CLIP model.
+    self.clip_model = create_clip_model(device=self.device)
+    self.clip_model.image_encoder.load_state_dict(load_checkpoint('clip/image-enc', self.device))
+    self.clip_model.text_encoder.load_state_dict(load_checkpoint('clip/text-enc', self.device))
+
+  def generate_and_select(self, text, batch_size = 1, guidance_scale = 3.0):
+
+    tokens = self.model.tokenizer.encode(text)
+    tokens, mask = self.model.tokenizer.padded_tokens_and_mask(
+        tokens, self.options['text_ctx']
+    )
+    model_kwargs = dict(
+      tokens=torch.tensor([tokens] * batch_size, device=self.device),
+      mask=torch.tensor([mask] * batch_size, dtype=torch.bool, device=self.device),
+    )
+    
+    cond_fn = self.clip_model.cond_fn([text] * batch_size, guidance_scale)
+
+    self.model.del_cache()
+    samples = self.diffusion.p_sample_loop(
+        self.model,
+        (batch_size, 3, self.options["image_size"], self.options["image_size"]),
+        device=self.device,
+        clip_denoised=True,
+        progress=True,
+        model_kwargs=model_kwargs,
+        cond_fn=cond_fn,
+    )
+    self.model.del_cache()
+
+    scaled = ((samples + 1)*127.5).round().clamp(0,255).to(torch.uint8).cpu()
+    reshaped = scaled.permute(2, 0, 3, 1).reshape([samples.shape[2], -1, 3])
+    return reshaped.numpy()
+
 def generate_and_save(model, mname, root, prompts):
     
     os.makedirs(f'{root}/generated_{mname}_images/', exist_ok = True)
@@ -150,6 +208,8 @@ def generate_and_save(model, mname, root, prompts):
         im = Image.fromarray(image)
         im.save(file_loc)
         images_loc.append(file_loc)
+        with open(f'{root}/log_{mname}_generation.txt', 'a') as f:
+          f.write(f'{file_loc}\t{pindex}.png\n')  
 
     data = {'captions': prompts,
             'image': images_loc}
@@ -160,8 +220,13 @@ def generate_and_save(model, mname, root, prompts):
 
 def main():
 
-  model = glide_filtered() if args.mname == 'glide_filtered' else minDALLE() 
-  
+  if args.mname == 'glide_filtered':
+    model = glide_filtered()
+  elif args.mname ==  'clip_guided':
+    model = clip_guided()
+  else:
+    model = minDALLE() 
+
   dtf = pd.read_csv(args.prompt_file, usecols = ['captions'])
   prompts = dtf['captions']
   generate_and_save(model, args.mname, args.root, prompts)
