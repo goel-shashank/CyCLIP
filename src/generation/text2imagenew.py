@@ -214,7 +214,7 @@ def generate_and_save(model, mname, root, prompts):
         im.save(file_loc)
         images_loc.append(file_loc)
         with open(f'{root}/log_{mname}_generation.txt', 'a') as f:
-          f.write(f'{file_loc}\t{pindex}.png\n')  
+          f.write(f'{prompt}\t{file_loc}.png\n')  
 
     data = {'captions': prompts,
             'image': images_loc}
