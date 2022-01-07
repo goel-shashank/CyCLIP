@@ -26,9 +26,8 @@ The following commands create a conda environment inside the repository.
 
 ```bash
 
-$ DIR=${1:-.}
-$ conda env create --prefix $DIR/env -f environment.yml
-$ source activate $DIR/env
+$ conda env create --prefix ./env -f environment.yml
+$ source activate ./env
 $ conda update --all
 ```
 
