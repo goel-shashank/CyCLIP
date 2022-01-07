@@ -1,94 +1,3 @@
-# import os
-
-# os.environ["WANDB_SILENT"] = "true"
-# os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3" 
-
-# import csv
-# import sys
-# import clip
-# import torch
-# import argparse
-# import numpy as np
-# import pandas as pd
-# import tensorflow as tf
-# from PIL import Image
-# from tqdm import tqdm
-# from utils import config
-# from .dalle import minDALLE, clipscore
-
-# class Generator:
-#     def __init__(self):
-#         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-#         self.mindalle = minDALLE.load("minDALL-E/1.3B", download_root = os.path.join(config.root, ".cache"), device = self.device)
-#         self.mindalle.to(self.device)
-#         self.clip, self.preprocess = clip.load("ViT-B/32", download_root = os.path.join(config.root, ".cache"), device = self.device)
-#         self.clip = self.clip.to(device = self.device)
-
-#     def __call__(self, prompt, num_images = 8, top_k = 64):
-#         with torch.no_grad():
-#             images = self.mindalle.sampling(prompt = prompt, top_k = top_k, num_candidates = num_images, device = self.device).cpu().numpy()
-#             images = np.transpose(images, (0, 2, 3, 1))
-#             rank = clipscore(prompt = prompt, images = images, clip = self.clip, preprocess = self.preprocess, device = self.device)
-#             image = images[rank][0]
-#             images = (image * 255).astype(np.uint8)
-#             return images
-
-# def generate(options):
-#     df = pd.read_csv(options.input_file, usecols = [options.caption_key], sep = options.separator)
-#     captions = df[options.caption_key]
-
-#     generator = Generator()
-
-#     output_dir = os.path.join(options.output_dir, "text2image", "images/")
-#     output_file = os.path.join(options.output_dir, "text2image", "generated.csv")
-
-#     os.makedirs(output_dir, exist_ok = True)
-#     if(os.path.exists(output_file)):
-#         writer = csv.writer(open(output_file, "a"))
-#         generated_captions = pd.read_csv(output_file)["caption"].tolist()
-#     else:
-#         writer = csv.writer(open(output_file, "w"))
-#         writer.writerow(["caption", "image"])
-#         generated_captions = []
-    
-#     bar = tqdm(enumerate(captions), total = len(captions))
-
-#     for index, caption in bar:
-#         if(captions in generated_captions):
-#             continue
-        
-#         try:
-#             image = generator(caption)
-#         except KeyboardInterrupt:
-#             break
-#         except:
-#             continue
-
-#         file = os.path.join(output_dir, f"{index}.png")
-#         Image.fromarray(image).save(file)
-#         writer.writerow([caption, os.path.join("images", f"{index}.png")])
-
-#     print("Generation complete!")
-
-# def main():
-#     parser = argparse.ArgumentParser()
-
-#     parser.add_argument("-i,--input_file", dest = "input_file", type = str, required = True, help = "Path to file containing captions")
-#     parser.add_argument("-o,--output_dir", dest = "output_dir", type = str, required = True, help = "Output directory to store generated images")
-#     parser.add_argument("-c,--caption_key", dest = "caption_key", type = str, default = "caption", help = "Caption"s column name in input file")
-#     parser.add_argument("-s,--separator", dest = "separator", type = str, default = ",", help = "Input file separator")
-
-#     options = parser.parse_args()
-
-#     if(options.input_file.endswith("tsv")):
-#         options.separator = "\t"
-
-#     generate(options)
-
-# if __name__ == "__main__":
-#     main()
-
-import multiprocessing
 import os
 
 os.environ["WANDB_SILENT"] = "true"
@@ -211,7 +120,7 @@ if(__name__ == "__main__"):
 
     bar = tqdm(total = len(captions))
 
-    Generator("cpu") # download model to cache
+    Generator("cpu")
 
     queue = mp.Queue()
     captions = np.array_split(captions, num_processes)
