@@ -53,15 +53,15 @@ def train(epoch, model, data, optimizer, scheduler, options):
 
         end = time.time()
 
-        if(options.master and (((index + 1) % 20 == 0) or (index == dataloader.num_batches - 1))):
+        if(options.master and (((index + 1) % 2000 == 0) or (index == dataloader.num_batches - 1))):
             num_samples = (index + 1) * len(input_ids) * options.ndevices
             dataloader_num_samples = dataloader.num_samples
 
-            logging.info(f"Train Epoch: {epoch} [{num_samples}/{dataloader_num_samples} ({100.0 * (index + 1) / dataloader.num_batches:.0f}%)]\tLoss: {loss.item():.6f}\tTime taken {end - start:.3f}\tLearning Rate: {optimizer.param_groups[0]['lr']:5f}")
+            logging.info(f"Train Epoch: {epoch} [{num_samples}/{dataloader_num_samples} ({100.0 * (index + 1) / dataloader.num_batches:.0f}%)]\tLoss: {loss.item():.6f}\tTime taken {end - start:.3f}\tLearning Rate: {optimizer.param_groups[0]['lr']:.9f}")
 
             metrics = {"loss": loss.item(), "time": end - start, "lr": optimizer.param_groups[0]["lr"]}
             if(options.wandb):
                 for key, value in metrics.items():
                     wandb.log({f"train/{key}": value, "step": step})
         
-        start = time.time()
+            start = time.time()

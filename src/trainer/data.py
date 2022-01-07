@@ -4,10 +4,13 @@ import logging
 import itertools
 import torchvision
 import pandas as pd
-from PIL import Image
+from PIL import Image, ImageFile
 from imagenetv2_pytorch import ImageNetV2Dataset
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.data.distributed import DistributedSampler
+
+# IMPORTANT
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 class CSVDataset(Dataset):
     def __init__(self, path, image_key, caption_key, delimiter, processor):
@@ -42,7 +45,7 @@ def get_dataloader(options, processor, train):
     sampler = DistributedSampler(dataset) if(options.distributed and train) else None
 
     dataloader = DataLoader(dataset, batch_size = batch_size, shuffle = train and (sampler is None), num_workers = options.workers, pin_memory = True, sampler = sampler, drop_last = train)
-    dataloader.num_samples = len(dataloader) * batch_size
+    dataloader.num_samples = len(dataset)
     dataloader.num_batches = len(dataloader)
 
     return dataloader

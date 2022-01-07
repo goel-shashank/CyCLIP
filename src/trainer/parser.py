@@ -11,7 +11,6 @@ def parse_args():
     parser.add_argument("--validation_data", type = str, default = None, help = "Path to validation data csv/tsv file")
     parser.add_argument("--test_data_dir", type = str, default = None, help = "Path to test data for conducting evaluation")
     parser.add_argument("--test_data_type", type = str, default = None, choices = ["Imagenet", "CIFAR10", "CIFAR100"], help = "Test dataset type")
-    parser.add_argument("--test_config", type = str, default = None, help = "Path to test config containing classes and templates")
     parser.add_argument("--delimiter", type = str, default = ",", help = "For train/validation data csv file, the delimiter to use")
     parser.add_argument("--image_key", type = str, default = "image", help = "For train/validation data csv file, the column name for the image paths")
     parser.add_argument("--caption_key", type = str, default = "caption", help = "For train/validation data csv file, the column name for the captions")

@@ -136,10 +136,10 @@ def worker(rank, options):
 def main():
     options = parse_args()
 
-    shutil.rmtree(options.logs, ignore_errors = True)
+    # shutil.rmtree(options.logs, ignore_errors = True)
 
     if(options.name is None):
-        options.name = time.strftime(f"date=%Y-%m-%d-%H-%M-%S", time.gmtime())
+        options.name = time.strftime(f"%Y:%m:%d:%H:%M:%S", time.gmtime())
 
     os.makedirs(os.path.join(options.logs, options.name), exist_ok = True)
 
@@ -156,7 +156,6 @@ def main():
     os.makedirs(options.checkpoint_path, exist_ok = True)
 
     options.ngpus = torch.cuda.device_count()
-    print(options.ngpus)
 
     if(options.ngpus == 0 or options.device == "cpu"):
         options.device = "cpu"
