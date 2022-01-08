@@ -130,9 +130,8 @@ if(__name__ == "__main__"):
         print(f"Using multi-gpu devices ({num_processes})")
         mp.set_start_method("spawn", force = True)
 
-    bar = tqdm(total = len(captions))
-
     Generator("cpu")
+    bar = tqdm(total = len(captions))
 
     queue = mp.Queue()
     captions = np.array_split(captions, num_processes)
