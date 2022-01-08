@@ -62,28 +62,39 @@ def background(queue, bar, writer, num_processes):
                 done += 1
             else:
                 writer.writerow(msg)
-        bar.update()
+                bar.update()
+        else:
+            bar.update()
         if(done == num_processes):
             break
 
 if(__name__ == "__main__"):
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-i,--input_file", dest = "input_file", type = str, required = True, help = "Path to file containing captions")
-    parser.add_argument("-o,--output_dir", dest = "output_dir", type = str, required = True, help = "Output directory to store generated images")
+    parser.add_argument("-i,--input_file", dest = "input_file", type = str, default = "data/MSCOCO/coco2017.captions.csv", help = "Path to file containing captions")
+    parser.add_argument("-o,--output_dir", dest = "output_dir", type = str, default = "data/MSCOCO-Fake", help = "Output directory to store generated images")
     parser.add_argument("-c,--caption_key", dest = "caption_key", type = str, default = "caption", help = "Caption's column name in input file")
     parser.add_argument("-s,--separator", dest = "separator", type = str, default = ",", help = "Input file separator")
+    parser.add_argument("--start", type = int, default = None, help = "Start index of captions (Inclusive)")
+    parser.add_argument("--end", type = int, default = None, help = "End index of captions (Exclusive)")
 
     options = parser.parse_args()
 
     if(options.input_file.endswith("tsv")):
         options.separator = "\t"
-
+    
     df = pd.read_csv(options.input_file, usecols = [options.caption_key], sep = options.separator)
+    
+    if(options.start is None): options.start = 0  
+    if(options.end is None): options.end = len(df) + 1  
+
+    df = df[options.start:options.end]
     captions = set(df[options.caption_key])
 
-    output_dir = os.path.join(options.output_dir, "text2image", "images/")
-    output_file = os.path.join(options.output_dir, "text2image", "generated.csv")
+    options.output_dir = f"{options.output_dir}-{options.start}-{options.end}"
+
+    output_dir = os.path.join(options.output_dir, "images/")
+    output_file = os.path.join(options.output_dir, "generated.csv")
 
     options.output_dir = output_dir
 
