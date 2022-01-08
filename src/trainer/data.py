@@ -5,7 +5,6 @@ import itertools
 import torchvision
 import pandas as pd
 from PIL import Image, ImageFile
-from imagenetv2_pytorch import ImageNetV2Dataset
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.data.distributed import DistributedSampler
 
@@ -20,7 +19,7 @@ class CSVDataset(Dataset):
 
         self.dir = os.path.dirname(path)
         self.images = df[image_key].tolist()
-        self.captions = processor.text(df[caption_key].tolist())
+        self.captions = processor.process_text(df[caption_key].tolist())
         self.processor = processor
 
         logging.debug("Loaded data")
@@ -32,7 +31,7 @@ class CSVDataset(Dataset):
         item = {}
         item["input_ids"] = self.captions["input_ids"][idx]
         item["attention_mask"] = self.captions["attention_mask"][idx]
-        item["pixel_values"] = self.processor.image(Image.open(os.path.join(self.dir, self.images[idx])))
+        item["pixel_values"] = self.processor.process_image(Image.open(os.path.join(self.dir, self.images[idx])))
         return item
 
 def get_dataloader(options, processor, train):
@@ -71,11 +70,11 @@ def get_test_dataloader(options, processor):
     if(options.test_data_dir is None): return
 
     if(options.test_data_type == "Imagenet"):
-        dataset = ImageNetDataset(root = options.test_data_dir, transform = processor.image)
+        dataset = ImageNetDataset(root = options.test_data_dir, transform = processor.process_image)
     elif(options.test_data_type == "CIFAR10"):
-        dataset = torchvision.datasets.CIFAR10(root = options.test_data_dir, download = True, train = False, transform = processor.image)
+        dataset = torchvision.datasets.CIFAR10(root = options.test_data_dir, download = True, train = False, transform = processor.process_image)
     elif(options.test_data_type == "CIFAR100"):
-        dataset = torchvision.datasets.CIFAR100(root = options.test_data_dir, download = True, train = False, transform = processor.image)
+        dataset = torchvision.datasets.CIFAR100(root = options.test_data_dir, download = True, train = False, transform = processor.process_image)
     else:
         raise Exception("Test dataset type {options.test_data_type} is not supported")
 

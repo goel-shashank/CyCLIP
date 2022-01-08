@@ -5,8 +5,9 @@ import utils.config as config
 def parse_args():
     parser = argparse.ArgumentParser()
     
-    parser.add_argument("--name", type = str, default = None, help = "Experiment Identifier (default: current timestamp)")
+    parser.add_argument("--name", type = str, default = None, help = "Experiment Name (default: current timestamp)")
     parser.add_argument("--logs", type = str, default = os.path.join(config.root, "logs/"), help = "Logs directory path")
+    parser.add_argument("--overwrite", action = "store_true", default = False, help = "Overwrite previous logs")
     parser.add_argument("--train_data", type = str, default = None, help = "Path to train data csv/tsv file")
     parser.add_argument("--validation_data", type = str, default = None, help = "Path to validation data csv/tsv file")
     parser.add_argument("--test_data_dir", type = str, default = None, help = "Path to test data for conducting evaluation")
@@ -21,7 +22,7 @@ def parse_args():
     parser.add_argument("--wandb", action = "store_true", default = False, help = "Enable wandb logging")
     parser.add_argument("--wandb_notes", type = str, default = None, help = "Notes for experiment")
     parser.add_argument("--workers", type = int, default = 1, help = "Number of workers per gpu")
-    parser.add_argument("--epochs", type = int, default = 32, help = "Number of train epochs")
+    parser.add_argument("--epochs", type = int, default = 5, help = "Number of train epochs")
     parser.add_argument("--train_batch_size", type = int, default = 64, help = "Train Batch size per gpu")
     parser.add_argument("--eval_batch_size", type = int, default = 64, help = "Eval Batch size per gpu")
     parser.add_argument("--lr", type = float, default = 5e-4, help = "Learning rate")
@@ -30,7 +31,7 @@ def parse_args():
     parser.add_argument("--eps", type = float, default = 1e-6, help = "Adam eps")
     parser.add_argument("--weight_decay", type = float, default = 0.2, help = "Adam weight decay")
     parser.add_argument("--warmup_steps", type = int, default = 10000, help = "Number of steps to warmup the learning rate")
-    parser.add_argument("--checkpoint", default = None, type = str, help = "Path to checkpoint to resume training from")
+    parser.add_argument("--checkpoint", default = None, type = str, help = "Path to checkpoint to resume training")
     parser.add_argument("--pretrained", default = False, action = "store_true", help = "Use the OpenAI pretrained models")
     parser.add_argument( "--debug", default = False, action = "store_true", help = "If true, more information is logged.")
 

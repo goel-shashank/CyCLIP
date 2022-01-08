@@ -6,7 +6,7 @@ import torch.nn as nn
 from tqdm import tqdm    
 
 def get_validation_metrics(model, dataloader, options):
-    logging.info("Started Validating")
+    logging.info("Started validating")
 
     metrics = {}
 
@@ -29,12 +29,12 @@ def get_validation_metrics(model, dataloader, options):
         loss = sum(losses) / dataloader.num_samples
         metrics["loss"] = loss
 
-    logging.info("Finished Validating")
+    logging.info("Finished validating")
 
     return metrics
 
 def get_test_metrics(model, processor, dataloader, options):
-    logging.info("Started Testing")
+    logging.info("Started testing")
 
     model.eval()
     umodel = model.module if(options.distributed) else model
@@ -46,7 +46,7 @@ def get_test_metrics(model, processor, dataloader, options):
         text_embeddings = []
         for c in tqdm(classes):
             text = [template(c) for template in templates]
-            text_tokens = processor.text(text)
+            text_tokens = processor.process_text(text)
             text_input_ids, text_attention_mask = text_tokens["input_ids"].to(options.map_location), text_tokens["attention_mask"].to(options.map_location) 
             text_embedding = umodel.get_text_features(input_ids = text_input_ids, attention_mask = text_attention_mask)
             text_embedding /= text_embedding.norm(dim = -1, keepdim = True)
@@ -76,7 +76,7 @@ def get_test_metrics(model, processor, dataloader, options):
                 correct[k] += torch.sum(torch.any(predictions[:k], dim = 0)).item() 
 
     results = {f"top{k}": correct[k] / dataloader.num_samples for k in topk}
-    logging.info("Finished Testing")
+    logging.info("Finished testing")
 
     return results
 
@@ -84,20 +84,22 @@ def evaluate(epoch, model, processor, data, options):
     metrics = {}
     
     if(options.master):
-        if(data["validation"] is not None): metrics.update(get_validation_metrics(model, data["validation"], options))
-        if(data["test"] is not None): metrics.update(get_test_metrics(model, processor, data["test"], options))
-
-        if(metrics):
+        if(data["validation"] is not None or data["test"] is not None):
             if(epoch == 0):
                 logging.info(f"Base evaluation")
             else:
                 logging.info(f"Epoch {epoch} evaluation")
 
+        if(data["validation"] is not None): metrics.update(get_validation_metrics(model, data["validation"], options))
+        if(data["test"] is not None): metrics.update(get_test_metrics(model, processor, data["test"], options))
+
+        if(metrics):
+            logging.info("Results")
             for key, value in metrics.items():
                 logging.info(f"{key}: {value:.4f}")
 
             if(options.wandb):
                 for key, value in metrics.items():
-                    wandb.log({f"eval/{key}": value, "epoch": epoch})
+                    wandb.log({f"evaluation/{key}": value, "epoch": epoch})
 
     return metrics

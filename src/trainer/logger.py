@@ -1,5 +1,6 @@
-import torch
 import logging
+import torch.multiprocessing as mp
+from logging import Formatter, FileHandler, StreamHandler
 from logging.handlers import QueueHandler, QueueListener
 
 class LogFilter(logging.Filter):
@@ -13,7 +14,7 @@ class LogFilter(logging.Filter):
             record.msg = f"Rank {self.rank} | {record.msg}"
         return True
 
-def set_logger(rank, logger, log_level, distributed):
+def set_worker_logger(rank, logger, log_level, distributed):
     queue_handler = QueueHandler(logger)
     queue_handler.addFilter(LogFilter(rank, distributed))
     queue_handler.setLevel(log_level)
@@ -23,16 +24,16 @@ def set_logger(rank, logger, log_level, distributed):
     logger.addHandler(queue_handler)
     logger.setLevel(log_level)
 
-def get_logger(log_file, log_level):
-    logger = torch.multiprocessing.Queue(-1)
+def get_root_logger(log_file, log_level):
+    logger = mp.Queue(-1)
 
-    formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s", datefmt = "%Y-%m-%d,%H:%M:%S")
+    formatter = Formatter("%(asctime)s | %(levelname)s | %(message)s", datefmt = "%Y-%m-%d,%H:%M:%S")
     
-    file_handler = logging.FileHandler(filename = log_file)
+    file_handler = FileHandler(filename = log_file)
     file_handler.setFormatter(formatter)
     file_handler.setLevel(log_level)
 
-    stream_handler = logging.StreamHandler()
+    stream_handler = StreamHandler()
     stream_handler.setFormatter(formatter)
     stream_handler.setLevel(log_level)
 

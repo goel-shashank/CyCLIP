@@ -1,22 +1,22 @@
-import os
 import time
 import wandb
 import torch
 import logging
 import torch.nn as nn
+import torch.distributed as dist
 
 def get_loss(umodel, outputs, criterion, options):
     if(options.distributed):
-        gathered_image_embeds = [torch.zeros_like(outputs.image_embeds) for _ in range(options.ndevices)]
-        gathered_text_embeds = [torch.zeros_like(outputs.text_embeds) for _ in range(options.ndevices)]
+        gathered_image_embeds = [torch.zeros_like(outputs.image_embeds) for _ in range(options.world_size)]
+        gathered_text_embeds = [torch.zeros_like(outputs.text_embeds) for _ in range(options.world_size)]
 
-        torch.distributed.all_gather(gathered_image_embeds, outputs.image_embeds)
-        torch.distributed.all_gather(gathered_text_embeds, outputs.text_embeds)
+        dist.all_gather(gathered_image_embeds, outputs.image_embeds)
+        dist.all_gather(gathered_text_embeds, outputs.text_embeds)
 
-        image_embeds = torch.cat([outputs.image_embeds] + gathered_image_embeds[:options.rank] + gathered_image_embeds[options.rank + 1:])
-        text_embeds = torch.cat([outputs.text_embeds] + gathered_text_embeds[:options.rank]+ gathered_text_embeds[options.rank + 1:])
+        image_embeds = torch.cat(gathered_image_embeds[:options.rank] + [outputs.image_embeds] + gathered_image_embeds[options.rank + 1:])
+        text_embeds = torch.cat(gathered_text_embeds[:options.rank]+ [outputs.text_embeds] + gathered_text_embeds[options.rank + 1:])
 
-        logits_per_image = umodel.logit_scale * image_embeds @ text_embeds.t()
+        logits_per_image = umodel.logit_scale.exp() * image_embeds @ text_embeds.t()
         logits_per_text = logits_per_image.t()
     else:
         logits_per_image = outputs.logits_per_image
@@ -31,6 +31,8 @@ def train(epoch, model, data, optimizer, scheduler, options):
     model.train()
     dataloader = data["train"]
     criterion = nn.CrossEntropyLoss().to(options.map_location)
+
+    modulo = int(dataloader.num_samples / options.train_batch_size / options.world_size / 10)
 
     start = time.time()
     for index, batch in enumerate(dataloader):
@@ -53,11 +55,11 @@ def train(epoch, model, data, optimizer, scheduler, options):
 
         end = time.time()
 
-        if(options.master and (((index + 1) % 2000 == 0) or (index == dataloader.num_batches - 1))):
-            num_samples = (index + 1) * len(input_ids) * options.ndevices
+        if(options.master and (((index + 1) % modulo == 0) or (index == dataloader.num_batches - 1))):
+            num_samples = (index + 1) * len(input_ids) * options.world_size
             dataloader_num_samples = dataloader.num_samples
 
-            logging.info(f"Train Epoch: {epoch} [{num_samples}/{dataloader_num_samples} ({100.0 * (index + 1) / dataloader.num_batches:.0f}%)]\tLoss: {loss.item():.6f}\tTime taken {end - start:.3f}\tLearning Rate: {optimizer.param_groups[0]['lr']:.9f}")
+            logging.info(f"Train Epoch: {epoch:02d} [{num_samples}/{dataloader_num_samples} ({100.0 * (index + 1) / dataloader.num_batches:.0f}%)]\tLoss: {loss.item():.6f}\tTime taken {end - start:.3f}\tLearning Rate: {optimizer.param_groups[0]['lr']:.9f}")
 
             metrics = {"loss": loss.item(), "time": end - start, "lr": optimizer.param_groups[0]["lr"]}
             if(options.wandb):
