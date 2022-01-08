@@ -84,7 +84,8 @@ if(__name__ == "__main__"):
         options.separator = "\t"
     
     df = pd.read_csv(options.input_file, usecols = [options.caption_key], sep = options.separator)
-    
+    df = df.drop_duplicates(subset = [options.caption_key]).reset_index(drop = True)
+
     if(options.start is None): options.start = 0  
     if(options.end is None): options.end = len(df) + 1  
 
