@@ -22,7 +22,7 @@ def parse_args():
     parser.add_argument("--wandb", action = "store_true", default = False, help = "Enable wandb logging")
     parser.add_argument("--wandb_notes", type = str, default = None, help = "Notes for experiment")
     parser.add_argument("--workers", type = int, default = 1, help = "Number of workers per gpu")
-    parser.add_argument("--epochs", type = int, default = 5, help = "Number of train epochs")
+    parser.add_argument("--epochs", type = int, default = 32, help = "Number of train epochs")
     parser.add_argument("--train_batch_size", type = int, default = 64, help = "Train Batch size per gpu")
     parser.add_argument("--eval_batch_size", type = int, default = 64, help = "Eval Batch size per gpu")
     parser.add_argument("--lr", type = float, default = 5e-4, help = "Learning rate")
