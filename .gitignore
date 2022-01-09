@@ -8,9 +8,9 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-data/CIFAR10
-data/CIFAR100
-data/Imagenet
+# data/CIFAR10
+# data/CIFAR100
+# data/Imagenet
 logs/
 wandb/
 build/
