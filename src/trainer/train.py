@@ -4,6 +4,7 @@ import torch
 import logging
 import torch.nn as nn
 import torch.distributed as dist
+from torch.cuda.amp import autocast
 
 def get_loss(umodel, outputs, criterion, options):
     if(options.distributed):
@@ -19,15 +20,15 @@ def get_loss(umodel, outputs, criterion, options):
         logits_per_image = umodel.logit_scale.exp() * image_embeds @ text_embeds.t()
         logits_per_text = logits_per_image.t()
     else:
-        logits_per_image = outputs.logits_per_image
-        logits_per_text = outputs.logits_per_text
+        logits_per_image = umodel.logit_scale.exp() * outputs.image_embeds @ outputs.text_embeds.t()
+        logits_per_text = logits_per_image.t()
 
     target = torch.arange(len(logits_per_image)).long().to(options.map_location, non_blocking = True)
     loss = (criterion(logits_per_image, target) + criterion(logits_per_text, target)) / 2
 
     return loss
 
-def train(epoch, model, data, optimizer, scheduler, options):    
+def train(epoch, model, data, optimizer, scheduler, scaler, options):    
     model.train()
     dataloader = data["train"]
     criterion = nn.CrossEntropyLoss().to(options.map_location)
@@ -35,20 +36,23 @@ def train(epoch, model, data, optimizer, scheduler, options):
     modulo = int(dataloader.num_samples / options.train_batch_size / options.world_size / 10)
 
     start = time.time()
-    for index, batch in enumerate(dataloader):
+    for index, batch in enumerate(dataloader):        
         step = dataloader.num_batches * epoch + index
         scheduler(step)
 
         optimizer.zero_grad()
         
-        input_ids, attention_mask, pixel_values = batch["input_ids"].to(options.map_location, non_blocking = True), batch["attention_mask"].to(options.map_location, non_blocking = True), batch["pixel_values"].to(options.map_location, non_blocking = True) 
+        input_ids, attention_mask, pixel_values = batch["input_ids"].to(options.map_location, non_blocking = True), batch["attention_mask"].to(options.map_location, non_blocking = True), batch["pixel_values"].to(options.map_location, non_blocking = True)
         outputs = model(input_ids = input_ids, attention_mask = attention_mask, pixel_values = pixel_values)
 
         umodel = model.module if(options.distributed) else model
 
-        loss = get_loss(umodel, outputs, criterion, options)
-        loss.backward()
-        optimizer.step()
+        with autocast():
+            loss = get_loss(umodel, outputs, criterion, options)
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+
+        scaler.update()
 
         # clamp model's logit scale to log(100) = 4.6052 (from the original paper)
         umodel.logit_scale.data = torch.clamp(umodel.logit_scale.data, 0, 4.6052)

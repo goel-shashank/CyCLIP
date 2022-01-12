@@ -8,11 +8,9 @@ import sys
 import time
 import wandb
 import torch
-import shutil
 import logging
 import warnings
 import numpy as np
-import torch.nn as nn
 import tensorflow as tf
 import torch.optim as optim
 import torch.distributed as dist
@@ -20,13 +18,15 @@ import torch.multiprocessing as mp
 import torch.backends.cudnn as cudnn
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-from .clip import load
+# from .huggingface.clip import load
+from .openai.clip import load
 from .train import train
 from .evaluate import evaluate
 from .data import get_data
 from .parser import parse_args
 from .logger import get_root_logger, set_worker_logger
 from .scheduler import cosine_scheduler
+from torch.cuda.amp import GradScaler
 
 mp.set_start_method("spawn", force = True)
 warnings.filterwarnings("ignore")
@@ -64,14 +64,16 @@ def worker(rank, options, logger):
         dist.init_process_group(backend = options.distributed_backend, init_method = options.distributed_init_method, world_size = options.world_size, rank = options.rank)
     
     # load the clip model processor
-    model, processor = load(pretrained = options.pretrained)
-
+    model, processor = load(name = options.model_name, pretrained = options.pretrained)
+    
     # move the model on gpu device
     if(options.device == "gpu"):
         torch.cuda.set_device(options.rank)
         model.to(options.map_location)
         if(options.distributed):
             model = DDP(model, device_ids = [options.rank])
+    else:
+        model.float()
 
     # load the data
     data = get_data(options, processor)
@@ -125,6 +127,7 @@ def worker(rank, options, logger):
     evaluate(start_epoch, model, processor, data, options)
 
     if(data["train"] is not None):
+        scaler = GradScaler()
         # start training
         best_loss = np.inf
         for epoch in range(start_epoch + 1, options.epochs + 1):
@@ -132,7 +135,7 @@ def worker(rank, options, logger):
                 logging.info(f"Starting Epoch {epoch}")
 
             start = time.time()
-            train(epoch, model, data, optimizer, scheduler, options)
+            train(epoch, model, data, optimizer, scheduler, scaler, options)
             end = time.time()
             if(options.master):
                 logging.info(f"Finished Epoch {epoch}, Time Taken: {end - start:.3f}")

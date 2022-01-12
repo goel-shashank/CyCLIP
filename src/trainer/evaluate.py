@@ -20,6 +20,10 @@ def get_validation_metrics(model, dataloader, options):
         for batch in tqdm(dataloader):
             input_ids, attention_mask, pixel_values = batch["input_ids"].to(options.map_location, non_blocking = True), batch["attention_mask"].to(options.map_location, non_blocking = True), batch["pixel_values"].to(options.map_location, non_blocking = True) 
             outputs = model(input_ids = input_ids, attention_mask = attention_mask, pixel_values = pixel_values)
+            
+            umodel = model.module if(options.distributed) else model
+            logits_per_image = umodel.logit_scale.exp() * outputs.image_embeds @ outputs.text_embeds.t()
+            logits_per_text = logits_per_image.t()
 
             target = torch.arange(len(input_ids)).long().to(options.map_location, non_blocking = True)
             loss = (criterion(outputs.logits_per_image, target) + criterion(outputs.logits_per_text, target)) / 2
