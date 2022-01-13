@@ -26,7 +26,7 @@ def get_validation_metrics(model, dataloader, options):
             logits_per_text = logits_per_image.t()
 
             target = torch.arange(len(input_ids)).long().to(options.map_location, non_blocking = True)
-            loss = (criterion(outputs.logits_per_image, target) + criterion(outputs.logits_per_text, target)) / 2
+            loss = (criterion(logits_per_image, target) + criterion(logits_per_text, target)) / 2
 
             losses.append(loss)
 

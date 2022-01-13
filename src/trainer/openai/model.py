@@ -362,10 +362,6 @@ class CLIP(nn.Module):
         image_features = self.get_image_features(pixel_values = pixel_values)
         text_features = self.get_text_features(input_ids = input_ids, attention_mask = attention_mask)
 
-        if(torch.isnan(image_features).any() or torch.isnan(image_features).any()):
-            print("image_features: ", image_features.requires_grad)
-            print("text_features: ", text_features.requires_grad)
-
         image_features = image_features / image_features.norm(dim=-1, keepdim=True)
         text_features = text_features / text_features.norm(dim=-1, keepdim=True)
 
