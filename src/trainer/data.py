@@ -44,26 +44,24 @@ def get_dataloader(options, processor, train):
     sampler = DistributedSampler(dataset) if(options.distributed and train) else None
 
     dataloader = DataLoader(dataset, batch_size = batch_size, shuffle = train and (sampler is None), num_workers = options.workers, pin_memory = True, sampler = sampler, drop_last = train)
-    dataloader.num_samples = len(dataset)
+    dataloader.num_samples = (len(dataloader) * batch_size) if(train) else len(dataset) 
     dataloader.num_batches = len(dataloader)
 
-    return dataloader
+    return dataloader, sampler
 
 class ImageNetDataset(Dataset):
     def __init__(self, root, transform):
         self.root = root
-        image_file_paths = sorted(os.listdir(os.path.join(self.root, "images")))
-        labels = list(map(lambda s: list(map(lambda e: int(e) if e else -1, s.strip().split(","))), open(os.path.join(root, "labels.txt")).read().split("\n")))
-        labels = list(zip(*itertools.zip_longest(*labels, fillvalue = -1)))
-        self.dataset = [(image_file_path, torch.tensor(label)) for image_file_path, label in zip(image_file_paths, labels) if any(i != -1 for i in label) > 0]
+        self.images = sorted(os.listdir(os.path.join(self.root, "images")))
+        self.labels = list(map(lambda x: int(x.strip()) - 1, open(os.path.join(root, "labels.txt")).readlines()))
         self.transform = transform
 
     def __len__(self):
-        return len(self.dataset)
+        return len(self.labels)
 
     def __getitem__(self, idx):
-        image_file_path, label = self.dataset[idx]
-        image = self.transform(Image.open(os.path.join(self.root, "images", image_file_path)))
+        image = self.transform(Image.open(os.path.join(self.root, "images", self.images[idx])))
+        label = self.labels[idx]
         return image, label
 
 def get_test_dataloader(options, processor):

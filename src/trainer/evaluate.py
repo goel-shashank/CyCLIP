@@ -16,12 +16,12 @@ def get_validation_metrics(model, dataloader, options):
     losses = []
 
     with torch.no_grad():
-        # running the model on validation batches
         for batch in tqdm(dataloader):
             input_ids, attention_mask, pixel_values = batch["input_ids"].to(options.map_location, non_blocking = True), batch["attention_mask"].to(options.map_location, non_blocking = True), batch["pixel_values"].to(options.map_location, non_blocking = True) 
             outputs = model(input_ids = input_ids, attention_mask = attention_mask, pixel_values = pixel_values)
             
             umodel = model.module if(options.distributed) else model
+
             logits_per_image = umodel.logit_scale.exp() * outputs.image_embeds @ outputs.text_embeds.t()
             logits_per_text = logits_per_image.t()
 
@@ -43,7 +43,6 @@ def get_test_metrics(model, processor, dataloader, options):
     model.eval()
     umodel = model.module if(options.distributed) else model
 
-    # Generating the class embeddings using multiple templates
     config = eval(open(f"{options.test_data_dir}/classes.py", "r").read())
     classes, templates = config["classes"], config["templates"]
     with torch.no_grad():
@@ -59,7 +58,6 @@ def get_test_metrics(model, processor, dataloader, options):
             text_embeddings.append(text_embedding)
         text_embeddings = torch.stack(text_embeddings, dim = 1).to(options.map_location)
 
-    # Predictions using cosine similarity and calculating the metrics
     with torch.no_grad():
         topk = [1, 3, 5, 10]
         correct = {k: 0 for k in topk}
@@ -70,11 +68,7 @@ def get_test_metrics(model, processor, dataloader, options):
 
             logits = (image_embedding @ text_embeddings)
             ranks = logits.topk(max(topk), 1)[1].T
-
-            if(len(label.shape) == 1):
-                predictions = ranks == label
-            else:
-                predictions = torch.vstack([torch.any(e == label.T, dim = 0) for e in ranks])
+            predictions = ranks == label
 
             for k in topk:
                 correct[k] += torch.sum(torch.any(predictions[:k], dim = 0)).item() 

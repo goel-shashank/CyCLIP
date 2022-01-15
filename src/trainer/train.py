@@ -29,8 +29,10 @@ def get_loss(umodel, outputs, criterion, options):
     return loss
 
 def train(epoch, model, data, optimizer, scheduler, scaler, options):    
-    model.train()
     dataloader = data["train"]
+    if(options.distributed): dataloader.sampler.set_epoch(epoch)
+
+    model.train()
     criterion = nn.CrossEntropyLoss().to(options.map_location)
 
     modulo = int(dataloader.num_samples / options.train_batch_size / options.world_size / 10)
@@ -54,7 +56,6 @@ def train(epoch, model, data, optimizer, scheduler, scaler, options):
 
         scaler.update()
 
-        # clamp model's logit scale to log(100) = 4.6052 (from the original paper)
         umodel.logit_scale.data = torch.clamp(umodel.logit_scale.data, 0, 4.6052)
 
         end = time.time()
