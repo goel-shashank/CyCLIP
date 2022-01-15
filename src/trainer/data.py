@@ -47,7 +47,7 @@ def get_dataloader(options, processor, train):
     dataloader.num_samples = (len(dataloader) * batch_size) if(train) else len(dataset) 
     dataloader.num_batches = len(dataloader)
 
-    return dataloader, sampler
+    return dataloader
 
 class ImageNetDataset(Dataset):
     def __init__(self, root, transform):
