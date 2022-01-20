@@ -14,7 +14,7 @@ class LogFilter(logging.Filter):
             record.msg = f"Rank {self.rank} | {record.msg}"
         return True
 
-def set_worker_logger(rank, logger, log_level, distributed):
+def set_logger(rank, logger, log_level = logging.INFO, distributed = False):
     queue_handler = QueueHandler(logger)
     queue_handler.addFilter(LogFilter(rank, distributed))
     queue_handler.setLevel(log_level)
@@ -24,7 +24,7 @@ def set_worker_logger(rank, logger, log_level, distributed):
     logger.addHandler(queue_handler)
     logger.setLevel(log_level)
 
-def get_root_logger(log_file, log_level):
+def get_logger(log_file, log_level = logging.INFO):
     logger = mp.Queue(-1)
 
     formatter = Formatter("%(asctime)s | %(levelname)s | %(message)s", datefmt = "%Y-%m-%d,%H:%M:%S")

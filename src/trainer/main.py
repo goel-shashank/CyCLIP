@@ -18,14 +18,14 @@ import torch.multiprocessing as mp
 import torch.backends.cudnn as cudnn
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-# from .huggingface.clip import load
-from .openai.clip import load
+# from src.huggingface.clip import load
+from src.openai.clip import load
 from .train import train
 from .evaluate import evaluate
 from .data import get_data
 from .parser import parse_args
-from .logger import get_root_logger, set_worker_logger
 from .scheduler import cosine_scheduler
+from .logger import get_logger, set_logger
 from torch.cuda.amp import GradScaler
 
 mp.set_start_method("spawn", force = True)
@@ -38,7 +38,7 @@ def worker(rank, options, logger):
     options.map_location = torch.device("cpu" if(options.device == "cpu") else f"cuda:{options.rank}")
 
     # set logging for worker
-    set_worker_logger(options.rank, logger, options.log_level, options.distributed)
+    set_logger(rank = options.rank, logger = logger, log_level = options.log_level, distributed = options.distributed)
 
     if(options.master):
         if(options.device == "cpu"):
@@ -177,7 +177,7 @@ def main():
     options.log_path = os.path.join(options.logs, options.name, "output.log")
     options.log_level = logging.DEBUG if options.debug else logging.INFO
 
-    logger, listener = get_root_logger(options.log_path, options.log_level)
+    logger, listener = get_logger(options.log_path, options.log_level)
 
     options.checkpoint_path = os.path.join(options.logs, options.name, "checkpoints")
     os.makedirs(options.checkpoint_path, exist_ok = True)

@@ -17,7 +17,7 @@ class CSVDataset(Dataset):
 
         df = pd.read_csv(path, sep = delimiter)
 
-        self.dir = os.path.dirname(path)
+        self.root = os.path.dirname(path)
         self.images = df[image_key].tolist()
         self.captions = processor.process_text(df[caption_key].tolist())
         self.processor = processor
@@ -31,7 +31,7 @@ class CSVDataset(Dataset):
         item = {}
         item["input_ids"] = self.captions["input_ids"][idx]
         item["attention_mask"] = self.captions["attention_mask"][idx]
-        item["pixel_values"] = self.processor.process_image(Image.open(os.path.join(self.dir, self.images[idx])))
+        item["pixel_values"] = self.processor.process_image(Image.open(os.path.join(self.root, self.images[idx])))
         return item
 
 def get_dataloader(options, processor, train):
