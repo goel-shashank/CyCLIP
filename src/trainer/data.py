@@ -43,7 +43,7 @@ def get_dataloader(options, processor, train):
     dataset = CSVDataset(path, image_key = options.image_key, caption_key = options.caption_key, delimiter = options.delimiter, processor = processor)
     sampler = DistributedSampler(dataset) if(options.distributed and train) else None
 
-    dataloader = DataLoader(dataset, batch_size = batch_size, shuffle = train and (sampler is None), num_workers = options.workers, pin_memory = True, sampler = sampler, drop_last = train)
+    dataloader = DataLoader(dataset, batch_size = batch_size, shuffle = train and (sampler is None), num_workers = options.num_workers, pin_memory = True, sampler = sampler, drop_last = train)
     dataloader.num_samples = (len(dataloader) * batch_size) if(train) else len(dataset) 
     dataloader.num_batches = len(dataloader)
 
