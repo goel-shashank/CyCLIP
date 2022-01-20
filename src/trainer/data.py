@@ -76,7 +76,7 @@ def get_test_dataloader(options, processor):
     else:
         raise Exception("Test dataset type {options.test_data_type} is not supported")
 
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size = options.eval_batch_size, num_workers = options.workers, sampler = None)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size = options.eval_batch_size, num_workers = options.num_workers, sampler = None)
     dataloader.num_samples = len(dataset)
     dataloader.num_batches = len(dataloader)
 
