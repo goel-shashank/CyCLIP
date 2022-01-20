@@ -17,6 +17,7 @@ dependencies:
     - pyflakes
     - pytorch_lightning
     - regex
+    - scikit-image
     - tensorflow
     - tokenizers
     - torchvision
