@@ -25,7 +25,7 @@ torch.backends.cudnn.benchmark = False      # NR: True is a bit faster, but can 
 from torch_optimizer import DiffGrad, AdamP
 
 # from CLIP import clip
-from src.trainer.openai.clip import load
+from src.openai.clip import load
 import kornia.augmentation as K
 import numpy as np
 import imageio
