@@ -32,6 +32,7 @@ def parse_args():
     parser.add_argument("--eps", type = float, default = 1e-8, help = "Adam eps")
     parser.add_argument("--weight_decay", type = float, default = 0.1, help = "Adam weight decay")
     parser.add_argument("--warmup_steps", type = int, default = 10000, help = "Number of steps to warmup the learning rate")
+    parser.add_argument("--symlambda", type = float, default = 100, help = "Symmetric regularization")
     parser.add_argument("--checkpoint", default = None, type = str, help = "Path to checkpoint to resume training")
     parser.add_argument("--pretrained", default = False, action = "store_true", help = "Use the OpenAI pretrained models")
     parser.add_argument( "--debug", default = False, action = "store_true", help = "If true, more information is logged.")
