@@ -24,9 +24,11 @@ def get_loss(umodel, outputs, criterion, options):
         logits_per_text = logits_per_image.t()
 
     target = torch.arange(len(logits_per_image)).long().to(options.map_location, non_blocking = True)
-    loss = (criterion(logits_per_image, target) + criterion(logits_per_text, target)) / 2
+    contrative_loss = (criterion(logits_per_image, target) + criterion(logits_per_text, target)) / 2
+    symmetric_loss = options.symlambda * (logits_per_image - logits_per_text).square().mean() / (umodel.logit_scale.exp() * umodel.logit_scale.exp())
 
-    return loss
+    loss = contrative_loss + symmetric_loss
+    return contrative_loss, symmetric_loss, loss
 
 def train(epoch, model, data, optimizer, scheduler, scaler, options):    
     dataloader = data["train"]
@@ -50,7 +52,7 @@ def train(epoch, model, data, optimizer, scheduler, scaler, options):
         umodel = model.module if(options.distributed) else model
 
         with autocast():
-            loss = get_loss(umodel, outputs, criterion, options)
+            contrative_loss, symmetric_loss, loss = get_loss(umodel, outputs, criterion, options)
             scaler.scale(loss).backward()
             scaler.step(optimizer)
 
@@ -66,7 +68,7 @@ def train(epoch, model, data, optimizer, scheduler, scaler, options):
 
             logging.info(f"Train Epoch: {epoch:02d} [{num_samples}/{dataloader_num_samples} ({100.0 * (index + 1) / dataloader.num_batches:.0f}%)]\tLoss: {loss.item():.6f}\tTime taken {end - start:.3f}\tLearning Rate: {optimizer.param_groups[0]['lr']:.9f}")
 
-            metrics = {"loss": loss.item(), "time": end - start, "lr": optimizer.param_groups[0]["lr"]}
+            metrics = {"contrative_loss": contrative_loss.item(), "symmetric_loss": symmetric_loss.item(), "loss": loss.item(), "time": end - start, "lr": optimizer.param_groups[0]["lr"]}
             if(options.wandb):
                 for key, value in metrics.items():
                     wandb.log({f"train/{key}": value, "step": step})

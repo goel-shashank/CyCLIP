@@ -4,9 +4,7 @@ os.environ["WANDB_SILENT"] = "true"
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3" 
 
 import csv
-import sys
 import clip
-import math
 import torch
 import argparse
 import numpy as np
@@ -20,7 +18,7 @@ from utils import config
 from .dalle import minDALLE, clipscore
 
 class Generator(torch.nn.Module):
-    def __init__(self, device = None):
+    def __init__(self, device = "cpu"):
         super(Generator, self).__init__()
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu") if(device is None) else device
         self.mindalle = minDALLE.load("minDALL-E/1.3B", download_root = os.path.join(config.root, ".cache"), device = self.device)
@@ -39,7 +37,7 @@ def generate(captions, options, queue):
     if(options.device == "cuda"):
         rank = int(mp.current_process().name.replace("Process-", "")) - 1
         options.device = f"cuda:{rank}" 
-
+        
     generator = Generator(options.device).to(options.device)
 
     for index, caption in captions:        
@@ -130,7 +128,7 @@ if(__name__ == "__main__"):
         print(f"Using multi-gpu devices ({num_processes})")
         mp.set_start_method("spawn", force = True)
 
-    Generator("cpu")
+    Generator()
     bar = tqdm(total = len(captions))
 
     queue = mp.Queue()

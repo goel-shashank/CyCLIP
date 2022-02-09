@@ -18,8 +18,8 @@ import torch.multiprocessing as mp
 import torch.backends.cudnn as cudnn
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-# from src.huggingface.clip import load
-from src.openai.clip import load
+# from pkgs.huggingface.clip import load
+from pkgs.openai.clip import load
 from .train import train
 from .evaluate import evaluate
 from .data import get_data
