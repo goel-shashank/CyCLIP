@@ -35,7 +35,7 @@ def worker(rank, options, logger):
     # set the properties of the worker
     options.rank = rank
     options.master = options.rank == 0
-    options.map_location = torch.device("cpu" if(options.device == "cpu") else f"cuda:{options.rank}")
+    options.map_location = torch.device("cpu" if(options.device == "cpu") else f"cuda:{options.rank if options.distributed else options.device_id}")
 
     # set logging for worker
     set_logger(rank = options.rank, logger = logger, log_level = options.log_level, distributed = options.distributed)
