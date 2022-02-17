@@ -28,3 +28,25 @@ class ImageNetV2Dataset(Dataset):
         label = self.labels[idx]
         return image, label
 
+class ImageNetSketch(Dataset):
+    '''
+        Dummy Run
+            import clip
+            model, preprocess = clip.load("ViT-B/32", download_root = '.cache')
+            ds = ImageNetSketch('/u/scratch/s/shashank/project/Multimodal-Representation-Learning/data/ImageNet-Sketch/ImageNet_Sketch.csv', preprocess)
+    '''
+    def __init__(self, imagenet_sketch_file, transform):
+        self.imagenet_sketch_file = imagenet_sketch_file 
+        self.dir = os.path.dirname(self.imagenet_sketch_file)
+        self.df = pd.read_csv(self.imagenet_sketch_file)
+        self.images = self.df['locations'].tolist()
+        self.labels = self.df['labels'].tolist()
+        self.transform = transform
+    
+    def __len__(self):
+        return len(self.labels)
+    
+    def __getitem__(self, idx):
+        image = self.transform(Image.open(os.path.join(self.dir, self.images[idx])))
+        label = self.labels[idx]
+        return image, label
