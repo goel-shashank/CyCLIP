@@ -14,30 +14,29 @@ class LogFilter(logging.Filter):
             record.msg = f"Rank {self.rank} | {record.msg}"
         return True
 
-def set_logger(rank, logger, log_level = logging.INFO, distributed = False):
+def set_logger(rank, logger, distributed = False):
     queue_handler = QueueHandler(logger)
     queue_handler.addFilter(LogFilter(rank, distributed))
-    queue_handler.setLevel(log_level)
+    queue_handler.setLevel(logging.INFO)
     queue_handler.flush()
 
     logger = logging.getLogger()
     logger.addHandler(queue_handler)
-    logger.setLevel(log_level)
+    logger.setLevel(logging.INFO)
 
-def get_logger(log_file, log_level = logging.INFO):
+def get_logger(log_file_path):
     logger = mp.Queue(-1)
 
     formatter = Formatter("%(asctime)s | %(levelname)s | %(message)s", datefmt = "%Y-%m-%d,%H:%M:%S")
     
-    file_handler = FileHandler(filename = log_file)
+    file_handler = FileHandler(log_file_path, "w+")
     file_handler.setFormatter(formatter)
-    file_handler.setLevel(log_level)
+    file_handler.setLevel(logging.INFO)
 
     stream_handler = StreamHandler()
     stream_handler.setFormatter(formatter)
-    stream_handler.setLevel(log_level)
+    stream_handler.setLevel(logging.INFO)
 
     listener = QueueListener(logger, file_handler, stream_handler)
-    listener.start()
 
     return logger, listener
