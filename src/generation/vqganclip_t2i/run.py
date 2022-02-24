@@ -566,7 +566,7 @@ class Generator(nn.Module):
         out = self.synth(self.z)
         info = PngImagePlugin.PngInfo()
         info.add_text('comment', f'{prompt}')
-        TF.to_pil_image(out[0].cpu()).save(f'{output}.png', pnginfo=info)   
+        TF.to_pil_image(out[0].cpu()).save(f'{output}', pnginfo=info)   
     
     def ascend_txt(self, prompt_obj):
         out = self.synth(self.z)
