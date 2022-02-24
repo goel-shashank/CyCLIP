@@ -68,7 +68,6 @@ def train(epoch, model, data, optimizer, scheduler, scaler, options):
     start = time.time()
 
     for index, batch in enumerate(dataloader): 
-        print(batch)
         try:
             batch_supplement = next(dataloader_supplement)
         except StopIteration:
@@ -131,10 +130,6 @@ def train(epoch, model, data, optimizer, scheduler, scaler, options):
             loss, symloss, alignloss = get_loss(umodel, outputs, criterion, options, len(batch["input_ids"]))
             scaler.scale(loss).backward()
             scaler.step(optimizer)
-            print(loss.item())
-            if(index == 1):
-                import sys
-                sys.exit()
         
         scaler.update()
         umodel.logit_scale.data = torch.clamp(umodel.logit_scale.data, 0, 4.6052)

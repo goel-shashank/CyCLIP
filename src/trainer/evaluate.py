@@ -74,7 +74,7 @@ def get_zeroshot_metrics(model, processor, dataloader, options):
             for k in topk:
                 correct[k] += torch.sum(torch.any(predictions[:k], dim = 0)).item() 
 
-    results = {f"top{k}": correct[k] / dataloader.num_samples for k in topk}
+    results = {f"zeroshot_top{k}": correct[k] / dataloader.num_samples for k in topk}
     logging.info("Finished zeroshot testing")
 
     return results

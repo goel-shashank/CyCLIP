@@ -8,20 +8,6 @@ from PIL import Image, ImageFile
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.data.distributed import DistributedSampler
 
-def seed_everything(seed):
-    seed = 0
-    import random, os
-    import numpy as np
-    import torch
-    
-    random.seed(seed)
-    os.environ['PYTHONHASHSEED'] = str(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = True
-    
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 class TextDataset(Dataset):
@@ -138,7 +124,7 @@ def get_train_dataloader(options, processor):
             dataset = TextImageDataset(path, image_key = options.image_key, caption_key = options.caption_key, delimiter = options.delimiter, processor = processor)
             sampler = DistributedSampler(dataset) if(options.distributed) else None
 
-            dataloader = DataLoader(dataset, batch_size = batch_size, shuffle = False and (sampler is None), num_workers = options.num_workers, pin_memory = True, sampler = sampler, drop_last = True, worker_init_fn = seed_everything)
+            dataloader = DataLoader(dataset, batch_size = batch_size, shuffle = (sampler is None), num_workers = options.num_workers, pin_memory = True, sampler = sampler, drop_last = True)
             dataloader.num_samples = len(dataloader) * batch_size 
             dataloader.num_batches = len(dataloader)
 
