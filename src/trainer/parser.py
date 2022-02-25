@@ -15,7 +15,7 @@ def parse_args():
     parser.add_argument("--augment_text", action = "store_true", default = False, help = "Augment text to unaligned text data")
     parser.add_argument("--train_unaligned_image_data", type = str, default = None, help = "Path to unaligned image csv/tsv file")
     parser.add_argument("--augment_image", action = "store_true", default = False, help = "Augment image to unaligned image data")
-    parser.add_argument("--validation_data", type = str, default = "data/CC3M/train/train.csv", help = "Path to validation data csv/tsv file")
+    parser.add_argument("--validation_data", type = str, default = "data/CC3M/validation/validation.csv", help = "Path to validation data csv/tsv file")
     parser.add_argument("--eval_data_type", type = str, default = "Imagenet", choices = ["CIFAR10", "CIFAR100", "Imagenet", "ImagenetV2", "ImagenetSketch"], help = "Test dataset type")
     parser.add_argument("--eval_test_data_dir", type = str, default = "data/Imagenet/validation", help = "Path to eval test data")
     parser.add_argument("--eval_train_data_dir", type = str, default = None, help = "Path to eval train data")
