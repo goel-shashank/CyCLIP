@@ -7,27 +7,60 @@ import torch.distributed as dist
 from torch.cuda.amp import autocast
 
 def get_loss(umodel, outputs, criterion, options, true_batch_size):
+    
     image_embeds = outputs.image_embeds
     text_embeds = outputs.text_embeds
+
+    if options.inmodal_training:
+        image_embeds, image_aug_embeds = image_embeds[:len(image_embeds)//2], image_embeds[len(image_embeds)//2:]
+        text_embeds, text_aug_embeds = text_embeds[:len(text_embeds)//2], text_embeds[len(text_embeds)//2:]
     
     if(options.distributed):
-        gathered_image_embeds = [torch.zeros_like(image_embeds) for _ in range(options.num_devices)]
-        gathered_text_embeds = [torch.zeros_like(text_embeds) for _ in range(options.num_devices)]
+
+        if options.inmodal_training:
+            gathered_image_embeds = [torch.zeros_like(image_embeds) for _ in range(options.num_devices)]
+            gathered_text_embeds = [torch.zeros_like(text_embeds) for _ in range(options.num_devices)]
+            gathered_image_aug_embeds = [torch.zeros_like(image_aug_embeds) for _ in range(options.num_devices)]
+            gathered_text_aug_embeds = [torch.zeros_like(text_aug_embeds) for _ in range(options.num_devices)]            
+        else:
+            gathered_image_embeds = [torch.zeros_like(image_embeds) for _ in range(options.num_devices)]
+            gathered_text_embeds = [torch.zeros_like(text_embeds) for _ in range(options.num_devices)]
         
-        dist.all_gather(gathered_image_embeds, image_embeds)
-        dist.all_gather(gathered_text_embeds, text_embeds)
+        if options.inmodal_training:
+            dist.all_gather(gathered_image_embeds, image_embeds)
+            dist.all_gather(gathered_text_embeds, text_embeds)
+            dist.all_gather(gathered_image_aug_embeds, image_aug_embeds)
+            dist.all_gather(gathered_text_aug_embeds, text_aug_embeds)
+        else:
+            dist.all_gather(gathered_image_embeds, image_embeds)
+            dist.all_gather(gathered_text_embeds, text_embeds)
         
-        image_embeds = torch.cat(gathered_image_embeds[:options.rank] + [image_embeds] + gathered_image_embeds[options.rank + 1:])
-        text_embeds = torch.cat(gathered_text_embeds[:options.rank]+ [text_embeds] + gathered_text_embeds[options.rank + 1:])
+        if options.inmodal_training:
+            image_embeds = torch.cat(gathered_image_embeds[:options.rank] + [image_embeds] + gathered_image_embeds[options.rank + 1:])
+            text_embeds  = torch.cat(gathered_text_embeds[:options.rank]+ [text_embeds] + gathered_text_embeds[options.rank + 1:])
+            image_aug_embeds = torch.cat(gathered_image_aug_embeds[:options.rank] + [image_aug_embeds] + gathered_image_aug_embeds[options.rank + 1:])
+            text_aug_embeds  = torch.cat(gathered_text_aug_embeds[:options.rank]+ [text_aug_embeds] + gathered_text_aug_embeds[options.rank + 1:])
+        else:
+            image_embeds = torch.cat(gathered_image_embeds[:options.rank] + [image_embeds] + gathered_image_embeds[options.rank + 1:])
+            text_embeds  = torch.cat(gathered_text_embeds[:options.rank]+ [text_embeds] + gathered_text_embeds[options.rank + 1:])
 
     logits_per_image = umodel.logit_scale.exp() * image_embeds @ text_embeds.t()
     logits_per_text = logits_per_image.t()
-    
-    batch_size = len(logits_per_text)
 
+    if options.inmodal_training:
+        logits_i2i = umodel.logit_scale.exp() * image_embeds @ image_aug_embeds.t()
+        logits_t2t = umodel.logit_scale.exp() * text_embeds @ text_aug_embeds.t()
+
+    batch_size = len(logits_per_text)
+    inmodal_loss = torch.zeros(1)
     if(options.loss == "contrastive"):
         target = torch.arange(batch_size).long().to(options.device, non_blocking = True)
-        loss = (criterion(logits_per_image, target) + criterion(logits_per_text, target)) / 2
+        alignloss = (criterion(logits_per_image, target) + criterion(logits_per_text, target)) / 2
+        if options.inmodal_training:
+            inmodal_loss = (criterion(logits_i2i, target) + criterion(logits_t2t, target)) / 2
+            loss = (alignloss + inmodal_loss) / 2
+        else:
+            loss = alignloss
 
     if(options.loss == "trace"):
         loss = -torch.mean(torch.diag(logits_per_image))
@@ -49,11 +82,11 @@ def get_loss(umodel, outputs, criterion, options, true_batch_size):
         if(true_batch_size < batch_size):
             target = torch.arange(true_batch_size).long().to(options.device, non_blocking = True)
             alignloss = (criterion(logits_per_image[:true_batch_size, ...], target) + criterion(logits_per_text[:true_batch_size, ...], target)) / 2
-            
+        
     symloss = options.symlambda * (logits_per_image - logits_per_text).square().mean() / (umodel.logit_scale.exp() * umodel.logit_scale.exp()) * batch_size
     loss += symloss
 
-    return loss, symloss, alignloss 
+    return loss, symloss, alignloss, inmodal_loss
 
 def train(epoch, model, data, optimizer, scheduler, scaler, options):    
     dataloader, dataloader_supplement, dataloader_unaligned_text, dataloader_unaligned_image = data["train"], iter(data["train_supplement"]), iter(data["train_unaligned_text"]), iter(data["train_unaligned_image"])
@@ -91,7 +124,14 @@ def train(epoch, model, data, optimizer, scheduler, scaler, options):
 
         optimizer.zero_grad()
         
-        input_ids, attention_mask, pixel_values = batch["input_ids"].to(options.device, non_blocking = True), batch["attention_mask"].to(options.device, non_blocking = True), batch["pixel_values"].to(options.device, non_blocking = True)
+        if options.inmodal_training:
+            input_ids_ori, attention_mask_ori, pixel_values_ori = batch["input_ids"][0].to(options.device, non_blocking = True), batch["attention_mask"][0].to(options.device, non_blocking = True), batch["pixel_values"][0].to(options.device, non_blocking = True)
+            input_ids_aug, attention_mask_aug, pixel_values_aug = batch["input_ids"][1].to(options.device, non_blocking = True), batch["attention_mask"][1].to(options.device, non_blocking = True), batch["pixel_values"][1].to(options.device, non_blocking = True)
+            input_ids = torch.cat([input_ids_ori, input_ids_aug])
+            attention_mask = torch.cat([attention_mask_ori, attention_mask_aug])
+            pixel_values = torch.cat([pixel_values_ori, pixel_values_aug])
+        else:
+            input_ids, attention_mask, pixel_values = batch["input_ids"].to(options.device, non_blocking = True), batch["attention_mask"].to(options.device, non_blocking = True), batch["pixel_values"].to(options.device, non_blocking = True)
         outputs = model(input_ids = input_ids, attention_mask = attention_mask, pixel_values = pixel_values)
 
         if(batch_supplement is not None):
@@ -127,7 +167,7 @@ def train(epoch, model, data, optimizer, scheduler, scaler, options):
                 outputs.text_embeds = torch.cat([outputs.text_embeds, image_features_unaligned_image], dim = 0)
 
         with autocast():
-            loss, symloss, alignloss = get_loss(umodel, outputs, criterion, options, len(batch["input_ids"]))
+            loss, symloss, alignloss, inmodal_loss = get_loss(umodel, outputs, criterion, options, len(batch["input_ids"]))
             scaler.scale(loss).backward()
             scaler.step(optimizer)
         
@@ -142,7 +182,7 @@ def train(epoch, model, data, optimizer, scheduler, scaler, options):
 
             logging.info(f"Train Epoch: {epoch:02d} [{num_samples}/{dataloader_num_samples} ({100.0 * (index + 1) / dataloader.num_batches:.0f}%)]\tLoss: {loss.item():.6f}\tTime taken {end - start:.3f}\tLearning Rate: {optimizer.param_groups[0]['lr']:.9f}")
 
-            metrics = {"loss": loss.item(), "symloss": symloss.item(), "alignloss": alignloss.item(), "time": end - start, "lr": optimizer.param_groups[0]["lr"]}
+            metrics = {"loss": loss.item(), "symloss": symloss.item(), "alignloss": alignloss.item(), "inmodal_loss": inmodal_loss.item(), "time": end - start, "lr": optimizer.param_groups[0]["lr"]}
             if(options.wandb):
                 for key, value in metrics.items():
                     wandb.log({f"train/{key}": value, "step": step})

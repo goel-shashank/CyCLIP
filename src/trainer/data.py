@@ -7,7 +7,11 @@ import pandas as pd
 from PIL import Image, ImageFile
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.data.distributed import DistributedSampler
+from utils.augment_text import augment_wo_saving_text
+from utils.augment_image import augment_wo_saving_image
 
+# nltk.download("wordnet")
+# nltk.download("omw-1.4")
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 class TextDataset(Dataset):
@@ -71,7 +75,7 @@ class ImageDataset(Dataset):
         return item
 
 class TextImageDataset(Dataset):
-    def __init__(self, path, image_key, caption_key, delimiter, processor, noise = False):
+    def __init__(self, path, image_key, caption_key, delimiter, processor, noise = False, inmodal = False):
         logging.debug(f"Loading aligned data from {path}")
 
         df = pd.read_csv(path, sep = delimiter)
@@ -80,6 +84,9 @@ class TextImageDataset(Dataset):
         self.images = df[("augmented_" if noise else "") + image_key].tolist()
         self.captions = processor.process_text(df[("augmented_" if noise else "") + caption_key].tolist())
         self.processor = processor
+        self.inmodal = inmodal
+        if inmodal:
+            self.augment_captions = processor.process_text([augment_wo_saving_text(caption) for caption in df[caption_key].tolist()])
 
         logging.debug("Loaded data")
 
@@ -88,9 +95,11 @@ class TextImageDataset(Dataset):
 
     def __getitem__(self, idx):
         item = {}
-        item["input_ids"] = self.captions["input_ids"][idx]
-        item["attention_mask"] = self.captions["attention_mask"][idx]
-        item["pixel_values"] = self.processor.process_image(Image.open(os.path.join(self.root, self.images[idx])))
+        item["input_ids"] = (self.captions["input_ids"][idx], self.augment_captions["input_ids"][idx]) if self.inmodal else self.captions["input_ids"][idx]
+        item["attention_mask"] = (self.captions["attention_mask"][idx], self.augment_captions["attention_mask"][idx]) if self.inmodal else self.captions["attention_mask"][idx]
+        item["pixel_values"] = (self.processor.process_image(Image.open(os.path.join(self.root, self.images[idx]))), \
+                                self.processor.process_image(augment_wo_saving_image(os.path.join(self.root, self.images[idx])))) \
+                                    if self.inmodal else self.processor.process_image(Image.open(os.path.join(self.root, self.images[idx])))
         return item
 
 class ImageNetDataset(Dataset):
@@ -121,7 +130,7 @@ def get_train_dataloader(options, processor):
         if(path_unaligned_text is None and path_unaligned_image is None):
             batch_size = options.batch_size
 
-            dataset = TextImageDataset(path, image_key = options.image_key, caption_key = options.caption_key, delimiter = options.delimiter, processor = processor)
+            dataset = TextImageDataset(path, image_key = options.image_key, caption_key = options.caption_key, delimiter = options.delimiter, processor = processor, inmodal = options.inmodal_training)
             sampler = DistributedSampler(dataset) if(options.distributed) else None
 
             dataloader = DataLoader(dataset, batch_size = batch_size, shuffle = (sampler is None), num_workers = options.num_workers, pin_memory = True, sampler = sampler, drop_last = True)
@@ -209,7 +218,7 @@ def get_validation_dataloader(options, processor):
     path = options.validation_data
     if(path is None): return
 
-    dataset = TextImageDataset(path, image_key = options.image_key, caption_key = options.caption_key, delimiter = options.delimiter, processor = processor)
+    dataset = TextImageDataset(path, image_key = options.image_key, caption_key = options.caption_key, delimiter = options.delimiter, processor = processor, inmodal = options.inmodal_training)
     dataloader = DataLoader(dataset, batch_size = options.batch_size, shuffle = False, num_workers = options.num_workers, pin_memory = True, sampler = None, drop_last = False)
     dataloader.num_samples = len(dataset) 
     dataloader.num_batches = len(dataloader)
@@ -219,14 +228,14 @@ def get_validation_dataloader(options, processor):
 def get_eval_test_dataloader(options, processor):
     if(options.eval_test_data_dir is None): return
 
-    if(options.eval_data_type in ["Imagenet", "ImagenetV2", "ImagenetSketch"]):
+    if(options.eval_data_type in ["Imagenet", "ImagenetV2", "ImagenetSketch", "StanfordDogs"]):
         dataset = ImageNetDataset(root = options.eval_test_data_dir, transform = processor.process_image)
     elif(options.eval_data_type == "CIFAR10"):
         dataset = torchvision.datasets.CIFAR10(root = options.eval_test_data_dir, download = True, train = False, transform = processor.process_image)
     elif(options.eval_data_type == "CIFAR100"):
         dataset = torchvision.datasets.CIFAR100(root = options.eval_test_data_dir, download = True, train = False, transform = processor.process_image)
     else:
-        raise Exception("Eval dataset type {options.eval_data_type} is not supported")
+        raise Exception(f"Eval dataset type {options.eval_data_type} is not supported")
 
     dataloader = torch.utils.data.DataLoader(dataset, batch_size = options.batch_size, num_workers = options.num_workers, sampler = None)
     dataloader.num_samples = len(dataset)
@@ -237,14 +246,14 @@ def get_eval_test_dataloader(options, processor):
 def get_eval_train_dataloader(options, processor):
     if(not options.linear_probe or options.eval_train_data_dir is None): return
 
-    if(options.eval_data_type in ["Imagenet", "ImagenetV2", "ImagenetSketch"]):
+    if(options.eval_data_type in ["Imagenet", "ImagenetV2", "ImagenetSketch", "StanfordDogs"]):
         dataset = ImageNetDataset(root = options.eval_train_data_dir, transform = processor.process_image)
     elif(options.eval_data_type == "CIFAR10"):
         dataset = torchvision.datasets.CIFAR10(root = options.eval_train_data_dir, download = True, train = True, transform = processor.process_image)
     elif(options.eval_data_type == "CIFAR100"):
         dataset = torchvision.datasets.CIFAR100(root = options.eval_train_data_dir, download = True, train = True, transform = processor.process_image)
     else:
-        raise Exception("Test dataset type {options.eval_data_type} is not supported")
+        raise Exception(f"Test dataset type {options.eval_data_type} is not supported")
 
     dataloader = torch.utils.data.DataLoader(dataset, batch_size = options.linear_probe_batch_size, num_workers = options.num_workers, sampler = None)
     dataloader.num_samples = len(dataset)
