@@ -4,10 +4,14 @@ import argparse
 import pandas as pd
 from tqdm import tqdm
 from utils import config
-from pkgs.edanlp.code.eda import *
+from pkgs.eda.code.eda import *
 
-nltk.download("wordnet")
-nltk.download("omw-1.4")
+# nltk.download("wordnet")
+# nltk.download("omw-1.4")
+
+def augment_wo_saving_text(caption):
+    augmented_caption = eda(caption)
+    return augmented_caption[0]
 
 def augment_text(options):
     df = pd.read_csv(os.path.join(config.root, options.input_file), delimiter = options.delimiter)
