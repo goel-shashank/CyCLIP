@@ -58,7 +58,7 @@ def worker(rank, options, logger):
     if(options.device == "cpu"):
         model.float()
     else:
-        torch.cuda.set_device(options.rank)
+        torch.cuda.set_device(options.rank if options.distributed else options.device_id)
         model.to(options.device)
         if(options.distributed):
             model = DDP(model, device_ids = [options.rank])

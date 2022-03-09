@@ -11,7 +11,7 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 transform = torchvision.transforms.AutoAugment()
 
-def augment_wo_saving_image(image_file):
+def _augment_image(image_file):
     image = Image.open(image_file)
     augmented_image = transform(image)
     return augmented_image

@@ -7,8 +7,8 @@ import pandas as pd
 from PIL import Image, ImageFile
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.data.distributed import DistributedSampler
-from utils.augment_text import augment_wo_saving_text
-from utils.augment_image import augment_wo_saving_image
+from utils.augment_text import _augment_text
+from utils.augment_image import _augment_image
 
 # nltk.download("wordnet")
 # nltk.download("omw-1.4")
@@ -84,9 +84,10 @@ class TextImageDataset(Dataset):
         self.images = df[("augmented_" if noise else "") + image_key].tolist()
         self.captions = processor.process_text(df[("augmented_" if noise else "") + caption_key].tolist())
         self.processor = processor
+        self.noise = noise
         self.inmodal = inmodal
-        if inmodal:
-            self.augment_captions = processor.process_text([augment_wo_saving_text(caption) for caption in df[caption_key].tolist()])
+        if(noise or inmodal):
+            self.augment_captions = processor.process_text([_augment_text(caption) for caption in df[caption_key].tolist()])
 
         logging.debug("Loaded data")
 
@@ -95,11 +96,11 @@ class TextImageDataset(Dataset):
 
     def __getitem__(self, idx):
         item = {}
-        item["input_ids"] = (self.captions["input_ids"][idx], self.augment_captions["input_ids"][idx]) if self.inmodal else self.captions["input_ids"][idx]
-        item["attention_mask"] = (self.captions["attention_mask"][idx], self.augment_captions["attention_mask"][idx]) if self.inmodal else self.captions["attention_mask"][idx]
+        item["input_ids"] = (self.captions["input_ids"][idx], self.augment_captions["input_ids"][idx]) if (self.noise or self.inmodal) else self.captions["input_ids"][idx]
+        item["attention_mask"] = (self.captions["attention_mask"][idx], self.augment_captions["attention_mask"][idx]) if (self.noise or self.inmodal) else self.captions["attention_mask"][idx]
         item["pixel_values"] = (self.processor.process_image(Image.open(os.path.join(self.root, self.images[idx]))), \
-                                self.processor.process_image(augment_wo_saving_image(os.path.join(self.root, self.images[idx])))) \
-                                    if self.inmodal else self.processor.process_image(Image.open(os.path.join(self.root, self.images[idx])))
+                                self.processor.process_image(_augment_image(os.path.join(self.root, self.images[idx])))) \
+                                    if (self.noise or self.inmodal) else self.processor.process_image(Image.open(os.path.join(self.root, self.images[idx])))
         return item
 
 class ImageNetDataset(Dataset):
@@ -200,8 +201,8 @@ def get_train_dataloader(options, processor):
         batch_size = round(options.batch_size * (1 - options.fraction))
         batch_size_supplement = options.batch_size - batch_size
         
-        dataset = TextImageDataset(path, image_key = options.image_key, caption_key = options.caption_key, delimiter = options.delimiter, processor = processor)
-        dataset_supplement = TextImageDataset(path_supplement, image_key = options.image_key, caption_key = options.caption_key, delimiter = options.delimiter, processor = processor, noise = options.noise)
+        dataset = TextImageDataset(path, image_key = options.image_key, caption_key = options.caption_key, delimiter = options.delimiter, processor = processor, noise = options.noise)
+        dataset_supplement = TextImageDataset(path_supplement, image_key = options.image_key, caption_key = options.caption_key, delimiter = options.delimiter, processor = processor, noise = options.noise_supplement)
         
         sampler = DistributedSampler(dataset) if(options.distributed) else None
         sampler_supplement = DistributedSampler(dataset_supplement) if(options.distributed) else None
@@ -234,6 +235,12 @@ def get_eval_test_dataloader(options, processor):
         dataset = torchvision.datasets.CIFAR10(root = options.eval_test_data_dir, download = True, train = False, transform = processor.process_image)
     elif(options.eval_data_type == "CIFAR100"):
         dataset = torchvision.datasets.CIFAR100(root = options.eval_test_data_dir, download = True, train = False, transform = processor.process_image)
+    elif(options.eval_data_type == "MNIST"):
+        dataset = torchvision.datasets.MNIST(root = options.eval_test_data_dir, download = True, train = False, transform = processor.process_image)
+    elif(options.eval_data_type == "Caltech101"):
+        dataset = torchvision.datasets.Caltech101(root = options.eval_test_data_dir, download = True, train = False, transform = processor.process_image)
+    elif(options.eval_data_type == "STL10"):
+        dataset = torchvision.datasets.STL10(root = options.eval_test_data_dir, download = True, split = 'test', transform = processor.process_image)
     else:
         raise Exception(f"Eval dataset type {options.eval_data_type} is not supported")
 
@@ -252,6 +259,12 @@ def get_eval_train_dataloader(options, processor):
         dataset = torchvision.datasets.CIFAR10(root = options.eval_train_data_dir, download = True, train = True, transform = processor.process_image)
     elif(options.eval_data_type == "CIFAR100"):
         dataset = torchvision.datasets.CIFAR100(root = options.eval_train_data_dir, download = True, train = True, transform = processor.process_image)
+    elif(options.eval_data_type == "MNIST"):
+        dataset = torchvision.datasets.MNIST(root = options.eval_test_data_dir, download = True, train = False, transform = processor.process_image)
+    elif(options.eval_data_type == "Caltech101"):
+        dataset = torchvision.datasets.Caltech101(root = options.eval_test_data_dir, download = True, train = False, transform = processor.process_image)
+    elif(options.eval_data_type == "STL10"):
+        dataset = torchvision.datasets.STL10(root = options.eval_test_data_dir, download = True, split = 'train', transform = processor.process_image)
     else:
         raise Exception(f"Test dataset type {options.eval_data_type} is not supported")
 

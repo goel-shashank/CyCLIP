@@ -96,10 +96,12 @@ def get_linear_probe_metrics(model, train_dataloader, test_dataloader, options):
     
     input_dim = umodel.text_projection.shape[1]
     
-    if(options.eval_data_type == "CIFAR10"):
+    if(options.eval_data_type in ["CIFAR10", "STL10", "MNIST"]):
         output_dim = 10
     elif(options.eval_data_type == "CIFAR100"):
         output_dim = 100
+    elif(options.eval_data_type == "Caltech101"):
+        output_dim = 101
     elif(options.eval_data_type in ["Imagenet", "ImagenetV2", "ImagenetSketch"]):
         output_dim = 1000
 
