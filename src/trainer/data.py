@@ -81,8 +81,8 @@ class TextImageDataset(Dataset):
         df = pd.read_csv(path, sep = delimiter)
 
         self.root = os.path.dirname(path)
-        self.images = df[("augmented_" if noise else "") + image_key].tolist()
-        self.captions = processor.process_text(df[("augmented_" if noise else "") + caption_key].tolist())
+        self.images = df[image_key].tolist()
+        self.captions = processor.process_text(df[caption_key].tolist())
         self.processor = processor
         self.noise = noise
         self.inmodal = inmodal
