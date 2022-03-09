@@ -24,5 +24,6 @@ dependencies:
     - torchvision
     - tqdm
     - transformers
+    - typing_extensions
     - wandb
     - wrapt
