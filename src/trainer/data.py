@@ -131,7 +131,7 @@ def get_train_dataloader(options, processor):
         if(path_unaligned_text is None and path_unaligned_image is None):
             batch_size = options.batch_size
 
-            dataset = TextImageDataset(path, image_key = options.image_key, caption_key = options.caption_key, delimiter = options.delimiter, processor = processor, inmodal = options.inmodal_training)
+            dataset = TextImageDataset(path, image_key = options.image_key, caption_key = options.caption_key, delimiter = options.delimiter, processor = processor, noise = options.noise, inmodal = options.inmodal_training)
             sampler = DistributedSampler(dataset) if(options.distributed) else None
 
             dataloader = DataLoader(dataset, batch_size = batch_size, shuffle = (sampler is None), num_workers = options.num_workers, pin_memory = True, sampler = sampler, drop_last = True)
@@ -144,7 +144,7 @@ def get_train_dataloader(options, processor):
             batch_size = round(options.batch_size * (1 - options.fraction))
             batch_size_unaligned_text = options.batch_size - batch_size
             
-            dataset = TextImageDataset(path, image_key = options.image_key, caption_key = options.caption_key, delimiter = options.delimiter, processor = processor)
+            dataset = TextImageDataset(path, image_key = options.image_key, caption_key = options.caption_key, delimiter = options.delimiter, processor = processor, noise = options.noise)
             dataset_unaligned_text = TextDataset(path_unaligned_text, caption_key = options.caption_key, delimiter = options.delimiter, processor = processor, augment = options.augment_text)
             
             sampler = DistributedSampler(dataset) if(options.distributed) else None
@@ -162,7 +162,7 @@ def get_train_dataloader(options, processor):
             batch_size = round(options.batch_size * (1 - options.fraction))
             batch_size_unaligned_image = options.batch_size - batch_size
             
-            dataset = TextImageDataset(path, image_key = options.image_key, caption_key = options.caption_key, delimiter = options.delimiter, processor = processor)
+            dataset = TextImageDataset(path, image_key = options.image_key, caption_key = options.caption_key, delimiter = options.delimiter, processor = processor, noise = options.noise)
             dataset_unaligned_image = ImageDataset(path_unaligned_image, image_key = options.image_key, delimiter = options.delimiter, processor = processor, augment = options.augment_image)
             
             sampler = DistributedSampler(dataset) if(options.distributed) else None
@@ -181,7 +181,7 @@ def get_train_dataloader(options, processor):
             batch_size_unaligned_text = (options.batch_size - batch_size) // 2
             batch_size_unaligned_image = (options.batch_size - batch_size) // 2
             
-            dataset = TextImageDataset(path, image_key = options.image_key, caption_key = options.caption_key, delimiter = options.delimiter, processor = processor)
+            dataset = TextImageDataset(path, image_key = options.image_key, caption_key = options.caption_key, delimiter = options.delimiter, processor = processor, noise = options.noise)
             dataset_unaligned_text = TextDataset(path_unaligned_text, caption_key = options.caption_key, delimiter = options.delimiter, processor = processor, augment = options.augment_text)
             dataset_unaligned_image = ImageDataset(path_unaligned_image, image_key = options.image_key, delimiter = options.delimiter, processor = processor, augment = options.augment_image)
             
