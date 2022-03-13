@@ -8,7 +8,7 @@ def parse_args():
     parser.add_argument("--name", type = str, required = True, help = "Experiment Name")
     parser.add_argument("--logs", type = str, default = os.path.join(config.root, "logs/"), help = "Logs directory path")
     parser.add_argument("--model_name", type = str, default = "RN50", choices = ["RN50", "RN101", "RN50x4", "ViT-B/32"], help = "Model Name")
-    parser.add_argument("--train_data", type = str, default = None, help = "Path to train data csv/tsv file")
+    parser.add_argument("--train_data", type = str, default = "data/CC3M/train/train.csv", help = "Path to train data csv/tsv file")
     parser.add_argument("--noise", action = "store_true", default = False, help = "Add noise to data")
     parser.add_argument("--train_supplement_data", type = str, default = None, help = "Path to train supplement data csv/tsv file")
     parser.add_argument("--noise_supplement", action = "store_true", default = False, help = "Add noise to supplement data")
@@ -46,6 +46,8 @@ def parse_args():
     parser.add_argument("--fraction", type = int, default = 0.25, help = "Special fraction in a batch")
     parser.add_argument("--num_warmup_steps", type = int, default = 10000, help = "Number of steps to warmup the learning rate")
     parser.add_argument("--symlambda", type = float, default = 0, help = "Symmetric regularization")
+    parser.add_argument("--use_inmodal_symmetry", default = False, action = "store_true", help = "Use inmodal symmetry term")
+    parser.add_argument("--use_crossmodal_symmetry", default = False, action = "store_true", help = "Use crossmodal symmetry term")
     parser.add_argument("--checkpoint", default = None, type = str, help = "Path to checkpoint to resume training")
     parser.add_argument("--pretrained", default = False, action = "store_true", help = "Use the OpenAI pretrained models")
 

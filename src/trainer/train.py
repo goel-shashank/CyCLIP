@@ -82,8 +82,24 @@ def get_loss(umodel, outputs, criterion, options, true_batch_size):
         if(true_batch_size < batch_size):
             target = torch.arange(true_batch_size).long().to(options.device, non_blocking = True)
             alignloss = (criterion(logits_per_image[:true_batch_size, ...], target) + criterion(logits_per_text[:true_batch_size, ...], target)) / 2
+    
+    symloss = torch.tensor(0).to(options.device)
+    if(options.symlambda and (options.use_inmodal_symmetry or options.use_crossmodal_symmetry)):
+        inmodal_symmetry_loss, crossmodal_symmetry_loss = torch.tensor(0).to(options.device), torch.tensor(0).to(options.device)
         
-    symloss = options.symlambda * (logits_per_image - logits_per_text).square().mean() / (umodel.logit_scale.exp() * umodel.logit_scale.exp()) * batch_size
+        if(options.use_inmodal_symmetry):
+            logits_only_image = umodel.logit_scale.exp() * image_embeds @ image_embeds.t()
+            logits_only_text = umodel.logit_scale.exp() * text_embeds @ text_embeds.t()
+            inmodal_symmetry_loss = (logits_only_image - logits_only_text).square().mean() / (umodel.logit_scale.exp() * umodel.logit_scale.exp()) * batch_size
+        
+        if(options.use_crossmodal_symmetry):
+            crossmodal_symmetry_loss = (logits_per_image - logits_per_text).square().mean() / (umodel.logit_scale.exp() * umodel.logit_scale.exp()) * batch_size
+
+        symloss = options.symlambda * (inmodal_symmetry_loss + crossmodal_symmetry_loss) / (options.use_inmodal_symmetry + options.use_crossmodal_symmetry)
+        print(inmodal_symmetry_loss)
+        print(crossmodal_symmetry_loss)
+        print(symloss)
+    
     loss += symloss
 
     return loss, symloss, alignloss, inmodal_loss
