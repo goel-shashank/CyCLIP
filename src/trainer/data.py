@@ -96,11 +96,20 @@ class TextImageDataset(Dataset):
 
     def __getitem__(self, idx):
         item = {}
-        item["input_ids"] = (self.captions["input_ids"][idx], self.augment_captions["input_ids"][idx]) if (self.noise or self.inmodal) else self.captions["input_ids"][idx]
-        item["attention_mask"] = (self.captions["attention_mask"][idx], self.augment_captions["attention_mask"][idx]) if (self.noise or self.inmodal) else self.captions["attention_mask"][idx]
-        item["pixel_values"] = (self.processor.process_image(Image.open(os.path.join(self.root, self.images[idx]))), \
-                                self.processor.process_image(_augment_image(os.path.join(self.root, self.images[idx])))) \
-                                    if (self.noise or self.inmodal) else self.processor.process_image(Image.open(os.path.join(self.root, self.images[idx])))
+        
+        if(self.inmodal):
+            item["input_ids"] = self.captions["input_ids"][idx], self.augment_captions["input_ids"][idx]
+            item["attention_mask"] = self.captions["attention_mask"][idx], self.augment_captions["attention_mask"][idx]
+            item["pixel_values"] = self.processor.process_image(Image.open(os.path.join(self.root, self.images[idx]))), self.processor.process_image(_augment_image(os.path.join(self.root, self.images[idx])))
+        elif(self.noise):
+            item["input_ids"] = self.augment_captions["input_ids"][idx]
+            item["attention_mask"] = self.augment_captions["attention_mask"][idx]
+            item["pixel_values"] = self.processor.process_image(_augment_image(os.path.join(self.root, self.images[idx])))
+        else:  
+            item["input_ids"] = self.captions["input_ids"][idx]
+            item["attention_mask"] = self.captions["attention_mask"][idx]
+            item["pixel_values"] = self.processor.process_image(Image.open(os.path.join(self.root, self.images[idx])))
+            
         return item
 
 class ImageNetDataset(Dataset):
