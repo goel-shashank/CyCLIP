@@ -70,7 +70,7 @@ def analyze(options):
    
 if(__name__ == "__main__"):
     parser = argparse.ArgumentParser()
-    parser.add_argument("-f,-file", dest = "file", type = str, default = "analysis/embeddings/symmetric/ImagenetSketch.pkl", help = "Input file")
+    parser.add_argument("-f,-file", dest = "file", type = str, default = "analysis/embeddings/inmodal-crossmodal-symmetric/CIFAR100.pkl", help = "Input file")
     parser.add_argument("-k,-topk", dest = "topk", nargs = "+", default = [1, 2, 3], help = "Top-K Accuracies")
     options = parser.parse_args()
     analyze(options)

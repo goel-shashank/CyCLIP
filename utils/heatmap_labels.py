@@ -16,14 +16,14 @@ warnings.filterwarnings("ignore")
 
 def heatmap(options):
     with torch.no_grad():
-        if(len(options.classes) == 0):
-            return
-        
         options.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         data = pickle.load(open(options.input, "rb"))
         image_embeddings, text_embeddings, labels, classes = torch.tensor(data["image_embeddings"]), torch.tensor(data["text_embeddings"]), torch.tensor(data["labels"]), data["classes"]
-
+        
+        if(len(options.classes) == 0):
+            options.classes = classes
+        
         indices_classes = [classes.index(c) for c in options.classes]
         indices_examples = list(itertools.chain(*zip(*[torch.arange(len(labels))[labels == classes.index(c)].tolist() for c in options.classes])))
 

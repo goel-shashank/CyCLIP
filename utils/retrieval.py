@@ -18,17 +18,19 @@ def batch(iterable, n = 1):
 @torch.no_grad()
 def itm_eval(text_embeddings, image_embeddings):
 
-    sim_matrix_i2t = image_embeddings @ text_embeddings.t()
-    sim_matrix_t2i = text_embeddings @ image_embeddings.t()
+    # sim_matrix_i2t = image_embeddings @ text_embeddings.t()
+    # sim_matrix_t2i = text_embeddings @ image_embeddings.t()
 
     ## Image -> Text
-    ranks = np.zeros(len(sim_matrix_i2t))
+    # ranks = np.zeros(len(sim_matrix_i2t))
+    ranks = np.zeros(len(image_embeddings))
 
-    for index, scores in tqdm(enumerate(sim_matrix_i2t)):
-        li = list(zip(sim_matrix_i2t[index], range(len(sim_matrix_i2t))))
-        li = sorted(li, key = lambda x: x[0].item(), reverse = True)
+    for index in range(0, len(image_embeddings), 5):
+        scores = image_embeddings[index] @ text_embeddings.t()
+        # scores = sim_matrix_i2t[index]
+        li = np.argsort(scores.detach().cpu().numpy())[::-1]
         for i in range(len(li)):
-            if li[i][1] == index:
+            if index <= li[i] and li[i] <= index + 4:
                 rank = i
                 break
         ranks[index] = rank
@@ -39,13 +41,14 @@ def itm_eval(text_embeddings, image_embeddings):
     tr10 = 100.0 * len(np.where(ranks < 10)[0]) / len(ranks)
 
     ## Image -> Text
-    ranks = np.zeros(len(sim_matrix_t2i))
-
-    for index, scores in tqdm(enumerate(sim_matrix_t2i)):
-        li = list(zip(sim_matrix_t2i[index], range(len(sim_matrix_i2t))))
-        li = sorted(li, key = lambda x: x[0].item(), reverse = True)
+    ranks = np.zeros(len(text_embeddings))
+    for index in range(len(text_embeddings)):
+        scores = text_embeddings[index] @ image_embeddings.t()
+    # for index, scores in tqdm(enumerate(sim_matrix_t2i)):
+        scores = scores[::5]
+        li = np.argsort(scores.detach().cpu().numpy())[::-1]
         for i in range(len(li)):
-            if li[i][1] == index:
+            if li[i] == index//5:
                 rank = i
                 break
         ranks[index] = rank
@@ -127,7 +130,7 @@ def evaluate(input_file):
                 print(f'No checkpoint found at {options.checkpoint}')
 
         model.eval()
-
+        print(input_file)
         root = os.path.dirname(input_file)
         df = pd.read_csv(input_file, sep = options.delimiter)
 
@@ -150,7 +153,7 @@ if(__name__ == "__main__"):
     parser.add_argument("--input_file", type = str, default = None, help = "Input file")
     # parser.add_argument("-o,--output_file", dest = "output_file", type = str, default = None, help = "Output file")
     # parser.add_argument("-q,--quiet", dest = "quiet" , default = False, action = "store_true", help = "Silent output")
-    parser.add_argument("--batch_size", type = int, default = 256, help = "Batch Size")
+    parser.add_argument("--batch_size", type = int, default = 128, help = "Batch Size")
     parser.add_argument("--delimiter", type = str, default = ",", help = "Input file delimiter")
     parser.add_argument("--image_key", type = str, default = "image", help = "Image column name")
     parser.add_argument("--caption_key", type = str, default = "caption", help = "Caption column name")
