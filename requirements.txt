@@ -5,6 +5,7 @@ git+https://github.com/openai/CLIP.git
 h5py
 matplotlib
 numpy
+nltk
 omegaconf
 pandas
 pillow
@@ -12,10 +13,12 @@ pip
 pyflakes
 pytorch_lightning
 regex
+scikit-image
 tensorflow
 tokenizers
 torchvision
 tqdm
 transformers
+typing_extensions
 wandb
 wrapt
