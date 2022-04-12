@@ -71,9 +71,9 @@ if(__name__ == "__main__"):
     parser = argparse.ArgumentParser()
     
     parser.add_argument("--input_file", type = str, default = "data/CC3M/validation/validation.csv", help = "Input file")
-    parser.add_argument("--output_file", type = str, default = "analysis/embeddings/inmodal-crossmodal-symmetric/CC3M.validation.pkl", help = "Output file")
+    parser.add_argument("--output_file", type = str, default = "analysis/embeddings/clip/CC3M.validation.pkl", help = "Output file")
     parser.add_argument("--model_name", type = str, default = "RN50", choices = ["RN50", "RN101", "RN50x4", "ViT-B/32"], help = "Model Name")
-    parser.add_argument("--checkpoint", type = str, default = "checkpoints/inmodal-crossmodal-symmetric/best.pt", help = "Path to checkpoint")
+    parser.add_argument("--checkpoint", type = str, default = "checkpoints/clip/best.pt", help = "Path to checkpoint")
     parser.add_argument("--batch_size", type = int, default = 256, help = "Batch Size")
     parser.add_argument("--num_workers", type = int, default = 8, help = "Number of workers")
 

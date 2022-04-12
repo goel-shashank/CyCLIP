@@ -2,10 +2,10 @@ import os
 import argparse
 import torchvision
 import pandas as pd
-from PIL import Image, ImageFile
 from tqdm import tqdm
 from utils import config
 from multiprocessing import Pool
+from PIL import Image, ImageFile
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 

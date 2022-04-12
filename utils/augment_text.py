@@ -6,9 +6,6 @@ from tqdm import tqdm
 from utils import config
 from pkgs.eda.code.eda import *
 
-# nltk.download("wordnet")
-# nltk.download("omw-1.4")
-
 def _augment_text(caption):
     augmented_caption = eda(caption)
     return augmented_caption[0]
