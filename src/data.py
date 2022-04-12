@@ -49,7 +49,7 @@ class ImageCaptionDataset(Dataset):
 
 def get_train_dataloader(options, processor):
     path = options.train_data
-    if(path is None): return None, None, None, None
+    if(path is None): return None
 
     batch_size = options.batch_size
 
