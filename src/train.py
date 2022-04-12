@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.distributed as dist
 from torch.cuda.amp import autocast
 
-def get_loss(umodel, outputs, criterion, options, true_batch_size):   
+def get_loss(umodel, outputs, criterion, options):   
     if(options.distributed):
         if(options.inmodal):
             gathered_image_embeds = [torch.zeros_like(image_embeds) for _ in range(options.num_devices)]

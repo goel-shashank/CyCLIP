@@ -4,7 +4,7 @@ import argparse
 import pandas as pd
 from tqdm import tqdm
 from utils import config
-from pkgs.eda.code.eda import *
+from .eda import *
 
 def _augment_text(caption):
     augmented_caption = eda(caption)
