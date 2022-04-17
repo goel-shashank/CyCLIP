@@ -5,6 +5,7 @@ import numpy as np
 import torch.nn as nn
 import torch.optim as optim
 from tqdm import tqdm    
+from .scheduler import cosine_scheduler
 
 def get_validation_metrics(model, dataloader, options):
     logging.info("Started validating")
@@ -38,7 +39,7 @@ def get_validation_metrics(model, dataloader, options):
 
     return metrics
 
-def get_zeroshot_metrics(model, processor, dataloader, options):
+def get_zeroshot_metrics(model, processor, test_dataloader, guide_dataloader, options):
     logging.info("Started zeroshot testing")
 
     model.eval()
@@ -62,19 +63,39 @@ def get_zeroshot_metrics(model, processor, dataloader, options):
     with torch.no_grad():
         topk = [1, 3, 5, 10]
         correct = {k: 0 for k in topk}
-
-        for image, label in tqdm(dataloader):
+        
+        guide_image_embeddings = []
+        if(guide_dataloader is not None):
+            for guide_image in tqdm(guide_dataloader):
+                guide_image = guide_image.to(options.device)
+                guide_image_embedding = umodel.get_image_features(guide_image)
+                guide_image_embedding /= guide_image_embedding.norm(dim = -1, keepdim = True)
+                guide_image_embeddings.append(guide_image_embedding)
+            guide_image_embedding = torch.cat(guide_image_embeddings, dim = 0)
+        
+        for image, label in tqdm(test_dataloader):
             image, label = image.to(options.device), label.to(options.device)
             image_embedding = umodel.get_image_features(image)
+            image_embedding /= image_embedding.norm(dim = -1, keepdim = True)
 
-            logits = (image_embedding @ text_embeddings)
+            if(guide_dataloader is not None):
+                value = image_embedding @ guide_image_embedding.T
+                value, indices = torch.topk(value, options.guide_k, dim = 1)
+                value = (torch.ones(len(image_embedding), len(guide_image_embedding)) * -100).to(options.device).scatter(1, indices, value)
+                value -= value.max(dim = -1, keepdim = True)[0]
+                value = torch.exp(value)
+                value /= value.sum(dim = -1, keepdim = True)
+                logits = value @ (guide_image_embedding @ text_embeddings)
+            else:
+                logits = (image_embedding @ text_embeddings)
+                
             ranks = logits.topk(max(topk), 1)[1].T
             predictions = ranks == label
 
             for k in topk:
                 correct[k] += torch.sum(torch.any(predictions[:k], dim = 0)).item() 
 
-    results = {f"zeroshot_top{k}": correct[k] / dataloader.num_samples for k in topk}
+    results = {f"zeroshot_top{k}": correct[k] / test_dataloader.num_samples for k in topk}
     logging.info("Finished zeroshot testing")
 
     return results
@@ -90,40 +111,65 @@ class LogisticRegression(torch.nn.Module):
     
 def get_linear_probe_metrics(model, train_dataloader, test_dataloader, options):
     logging.info("Started linear probe testing")
+    logging.info(f"Number of train examples: {train_dataloader.num_samples}")
+    logging.info(f"Number of test examples: {test_dataloader.num_samples}")
 
     model.eval()
     umodel = model.module if(options.distributed) else model
     
+    images = None
+    labels = None
+    with torch.no_grad():
+        for image, label in tqdm(train_dataloader):
+            image = umodel.get_image_features(image.to(options.device)).cpu()
+            images = torch.cat([images, image], dim = 0) if(images is not None) else image
+            labels = torch.cat([labels, label], dim = 0) if(labels is not None) else label
+
+    train_dataset = torch.utils.data.TensorDataset(images, labels)
+    train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size = options.batch_size, shuffle = True)
+    
     input_dim = umodel.text_projection.shape[1]
     
-    if(options.eval_data_type in ["CIFAR10", "STL10", "MNIST"]):
+    if(options.eval_data_type == "CIFAR10"):
         output_dim = 10
     elif(options.eval_data_type == "CIFAR100"):
         output_dim = 100
-    elif(options.eval_data_type == "Caltech101"):
+    elif(options.eval_data_type == "Food101"):
         output_dim = 101
-    elif(options.eval_data_type in ["Imagenet", "ImagenetV2", "ImagenetSketch"]):
-        output_dim = 1000
+    elif(options.eval_data_type == "OxfordIIITPet"):
+        output_dim = 37
+    elif(options.eval_data_type == "Flowers102"):
+        output_dim = 102
+    elif(options.eval_data_type == "SUN397"):
+        output_dim = 397
+    elif(options.eval_data_type == "StanfordCars"):
+        output_dim = 196
+    elif(options.eval_data_type == "DTD"):
+        output_dim = 47
+    elif(options.eval_data_type == "Caltech101"):
+        output_dim = 102
+    elif(options.eval_data_type == "FGVCAircraft"):
+        output_dim = 100
 
     classifier = LogisticRegression(input_dim = input_dim, output_dim = output_dim).to(options.device)
-    
-    optimizer = optim.Adam(classifier.parameters())
+    optimizer = optim.AdamW([{"params": [parameter for name, parameter in classifier.named_parameters() if(("bias" in name) and parameter.requires_grad)], "weight_decay": 0}, {"params": [parameter for name, parameter in classifier.named_parameters() if(("bias" not in name) and parameter.requires_grad)], "weight_decay": 0.01}])
+    scheduler = cosine_scheduler(optimizer, 0.005, 0, len(train_dataloader) * options.linear_probe_num_epochs)
     criterion = nn.CrossEntropyLoss().to(options.device)
-
+    
     pbar = tqdm(range(options.linear_probe_num_epochs))
     for epoch in pbar:
         cbar = tqdm(train_dataloader, leave = False)
-        for image, label in cbar:
+        for index, (image, label) in enumerate(cbar):
+            step = len(train_dataloader) * epoch + index
+            scheduler(step)
             image, label = image.to(options.device), label.to(options.device)
-            with torch.no_grad():
-                image = umodel.get_image_features(image)
             logit = classifier(image)
             optimizer.zero_grad()
             loss = criterion(logit, label)
             loss.backward()
             optimizer.step()
-            cbar.set_postfix({"loss": loss.item()})
-        pbar.set_postfix({"loss": loss.item()})
+            cbar.set_postfix({"loss": loss.item(), "lr": optimizer.param_groups[0]["lr"]})
+        pbar.set_postfix({"loss": loss.item(), "lr": optimizer.param_groups[0]["lr"]})
 
     classifier.eval()
     
@@ -159,9 +205,10 @@ def evaluate(epoch, model, processor, data, options):
             metrics.update(get_validation_metrics(model, data["validation"], options))
             
         if(data["eval_test"] is not None): 
-            metrics.update(get_zeroshot_metrics(model, processor, data["eval_test"], options))
             if(data["eval_train"] is not None):
                 metrics.update(get_linear_probe_metrics(model, data["eval_train"], data["eval_test"], options))
+            else:
+                metrics.update(get_zeroshot_metrics(model, processor, data["eval_test"], data["eval_guide"], options))
     
         if(metrics):
             logging.info("Results")

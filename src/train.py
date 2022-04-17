@@ -60,19 +60,17 @@ def get_loss(umodel, outputs, criterion, options):
         crossmodal_contrastive_loss = (criterion(logits_text_per_image, target) + criterion(logits_image_per_text, target)) / 2
         contrastive_loss = crossmodal_contrastive_loss
 
-    cyclic_loss = torch.tensor(0).to(options.device)
-    if(options.cylambda):
-        inmodal_cyclic_loss, crossmodal_cyclic_loss = torch.tensor(0).to(options.device), torch.tensor(0).to(options.device)
-        
-        if(options.cyalpha > 0):
-            logits_image_per_image = umodel.logit_scale.exp() * image_embeds @ image_embeds.t()
-            logits_text_per_text = umodel.logit_scale.exp() * text_embeds @ text_embeds.t()
-            inmodal_cyclic_loss = (logits_image_per_image - logits_text_per_text).square().mean() / (umodel.logit_scale.exp() * umodel.logit_scale.exp()) * batch_size
-        
-        if(options.cyalpha < 1):
-            crossmodal_cyclic_loss = (logits_text_per_image - logits_image_per_text).square().mean() / (umodel.logit_scale.exp() * umodel.logit_scale.exp()) * batch_size
+    inmodal_cyclic_loss = torch.tensor(0).to(options.device)
+    if(options.cylambda1 > 0):
+        logits_image_per_image = umodel.logit_scale.exp() * image_embeds @ image_embeds.t()
+        logits_text_per_text = umodel.logit_scale.exp() * text_embeds @ text_embeds.t()
+        inmodal_cyclic_loss = (logits_image_per_image - logits_text_per_text).square().mean() / (umodel.logit_scale.exp() * umodel.logit_scale.exp()) * batch_size
+    
+    crossmodal_cyclic_loss = torch.tensor(0).to(options.device)
+    if(options.cylambda2 > 0):
+        crossmodal_cyclic_loss = (logits_text_per_image - logits_image_per_text).square().mean() / (umodel.logit_scale.exp() * umodel.logit_scale.exp()) * batch_size
 
-        cyclic_loss = options.cylambda * (options.cyalpha * inmodal_cyclic_loss + (1 - options.cyalpha) * crossmodal_cyclic_loss)
+    cyclic_loss = options.cylambda1 * inmodal_cyclic_loss + options.cylambda2 * crossmodal_cyclic_loss)
     
     loss = contrastive_loss + cyclic_loss
     

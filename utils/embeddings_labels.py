@@ -100,9 +100,9 @@ def embeddings(options):
 if(__name__ == "__main__"):
     parser = argparse.ArgumentParser()
     
-    parser.add_argument("--input_dir", type = str, default = "data/CIFAR100/test", help = "Input dir")
-    parser.add_argument("--input_type", type = str, default = "CIFAR100", help = "Input data type")
-    parser.add_argument("--output_file", type = str, default = "analysis/embeddings/inmodal-crossmodal-symmetric/CIFAR100.pkl", help = "Output file")
+    parser.add_argument("--input_dir", type = str, default = "data/CIFAR10/test", help = "Input dir")
+    parser.add_argument("--input_type", type = str, default = "CIFAR10", help = "Input data type")
+    parser.add_argument("--output_file", type = str, default = "analysis/embeddings/clip/CIFAR10.pkl", help = "Output file")
     parser.add_argument("--model_name", type = str, default = "RN50", choices = ["RN50", "RN101", "RN50x4", "ViT-B/32"], help = "Model Name")
     parser.add_argument("--checkpoint", type = str, default = "checkpoints/inmodal-crossmodal-symmetric/epoch_64.pt", help = "Path to checkpoint")
     parser.add_argument("--batch_size", type = int, default = 256, help = "Batch Size")
