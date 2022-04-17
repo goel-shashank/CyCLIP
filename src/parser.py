@@ -16,7 +16,7 @@ def parse_args():
     parser.add_argument("--linear_probe", action = "store_true", default = False, help = "Linear Probe classification")
     parser.add_argument("--linear_probe_batch_size", type = int, default = 32, help = "Linear Probe batch size")
     parser.add_argument("--linear_probe_num_epochs", type = int, default = 32, help = "Linear Probe num epochs")
-    parser.add_argument("--eval_guide_data", type = str, default = "data/CC3M/validation/validation.csv", help = "Evaluation guide data path")
+    parser.add_argument("--eval_guide_data", type = str, default = None, help = "Evaluation guide data path")
     parser.add_argument("--guide", action = "store_true", default = False, help = "Use Zeroshot Guide")
     parser.add_argument("--guide_k", type = int, default = 100, help = "Number of Guides to use")
     parser.add_argument("--guide_batch_size", type = int, default = 32, help = "Guide batch size")
