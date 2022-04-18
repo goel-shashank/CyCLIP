@@ -7,39 +7,39 @@ import torch.distributed as dist
 from torch.cuda.amp import autocast
 
 def get_loss(umodel, outputs, criterion, options):  
+    if(options.inmodal):
+        image_embeds, augmented_image_embeds = outputs.image_embeds[:len(outputs.image_embeds) // 2], outputs.image_embeds[len(outputs.image_embeds) // 2:]
+        text_embeds, augmented_text_embeds = outputs.text_embeds[:len(outputs.text_embeds) // 2], outputs.text_embeds[len(outputs.text_embeds) // 2:]
+    else:
+        image_embeds = outputs.image_embeds
+        text_embeds = outputs.text_embeds
+            
     if(options.distributed):
         if(options.inmodal):
-            gathered_image_embeds = [torch.zeros_like(outputs.image_embeds) for _ in range(options.num_devices)]
-            gathered_text_embeds = [torch.zeros_like(outputs.text_embeds) for _ in range(options.num_devices)]
-            augmented_gathered_image_embeds = [torch.zeros_like(augmented_image_embeds) for _ in range(options.num_devices)]
-            augmented_gathered_text_embeds = [torch.zeros_like(augmented_text_embeds) for _ in range(options.num_devices)]
+            gathered_image_embeds = [torch.zeros_like(image_embeds) for _ in range(options.num_devices)]
+            gathered_text_embeds = [torch.zeros_like(text_embeds) for _ in range(options.num_devices)]
+            augmented_gathered_image_embeds = [torch.zeros_like(outputs.augmented_image_embeds) for _ in range(options.num_devices)]
+            augmented_gathered_text_embeds = [torch.zeros_like(outputs.augmented_text_embeds) for _ in range(options.num_devices)]
             
-            dist.all_gather(gathered_image_embeds, outputs.image_embeds)
-            dist.all_gather(gathered_text_embeds, outputs.text_embeds)
-            dist.all_gather(augmented_gathered_image_embeds, augmented_image_embeds)
-            dist.all_gather(augmented_gathered_text_embeds, augmented_text_embeds)
+            dist.all_gather(gathered_image_embeds, image_embeds)
+            dist.all_gather(gathered_text_embeds, text_embeds)
+            dist.all_gather(augmented_gathered_image_embeds, outputs.augmented_image_embeds)
+            dist.all_gather(augmented_gathered_text_embeds, outputs.augmented_text_embeds)
             
-            image_embeds = torch.cat(gathered_image_embeds[:options.rank] + [outputs.image_embeds] + gathered_image_embeds[options.rank + 1:])
-            text_embeds  = torch.cat(gathered_text_embeds[:options.rank]+ [outputs.text_embeds] + gathered_text_embeds[options.rank + 1:])
-            augmented_image_embeds = torch.cat(augmented_gathered_image_embeds[:options.rank] + [augmented_image_embeds] + augmented_gathered_image_embeds[options.rank + 1:])
-            augmented_text_embeds  = torch.cat(augmented_gathered_text_embeds[:options.rank]+ [augmented_text_embeds] + augmented_gathered_text_embeds[options.rank + 1:])      
+            image_embeds = torch.cat(gathered_image_embeds[:options.rank] + [image_embeds] + gathered_image_embeds[options.rank + 1:])
+            text_embeds  = torch.cat(gathered_text_embeds[:options.rank]+ [text_embeds] + gathered_text_embeds[options.rank + 1:])
+            augmented_image_embeds = torch.cat(augmented_gathered_image_embeds[:options.rank] + [outputs.augmented_image_embeds] + augmented_gathered_image_embeds[options.rank + 1:])
+            augmented_text_embeds  = torch.cat(augmented_gathered_text_embeds[:options.rank]+ [outputs.augmented_text_embeds] + augmented_gathered_text_embeds[options.rank + 1:])      
         else:
-            gathered_image_embeds = [torch.zeros_like(outputs.image_embeds) for _ in range(options.num_devices)]
-            gathered_text_embeds = [torch.zeros_like(outputs.text_embeds) for _ in range(options.num_devices)]
+            gathered_image_embeds = [torch.zeros_like(image_embeds) for _ in range(options.num_devices)]
+            gathered_text_embeds = [torch.zeros_like(text_embeds) for _ in range(options.num_devices)]
         
-            dist.all_gather(gathered_image_embeds, outputs.image_embeds)
-            dist.all_gather(gathered_text_embeds, outputs.text_embeds)
+            dist.all_gather(gathered_image_embeds, image_embeds)
+            dist.all_gather(gathered_text_embeds, text_embeds)
         
-            image_embeds = torch.cat(gathered_image_embeds[:options.rank] + [outputs.image_embeds] + gathered_image_embeds[options.rank + 1:])
-            text_embeds  = torch.cat(gathered_text_embeds[:options.rank]+ [outputs.text_embeds] + gathered_text_embeds[options.rank + 1:])
-    else:
-        if(options.inmodal):
-            image_embeds, augmented_image_embeds = outputs.image_embeds[:len(outputs.image_embeds) // 2], outputs.image_embeds[len(outputs.image_embeds) // 2:]
-            text_embeds, augmented_text_embeds = outputs.text_embeds[:len(outputs.text_embeds) // 2], outputs.text_embeds[len(outputs.text_embeds) // 2:]
-        else:
-            image_embeds = outputs.image_embeds
-            text_embeds = outputs.text_embeds
-            
+            image_embeds = torch.cat(gathered_image_embeds[:options.rank] + [image_embeds] + gathered_image_embeds[options.rank + 1:])
+            text_embeds  = torch.cat(gathered_text_embeds[:options.rank]+ [text_embeds] + gathered_text_embeds[options.rank + 1:])
+        
     logits_text_per_image = umodel.logit_scale.exp() * image_embeds @ text_embeds.t()
     logits_image_per_text = logits_text_per_image.t()
 
