@@ -18,18 +18,18 @@ def get_loss(umodel, outputs, criterion, options):
         if(options.inmodal):
             gathered_image_embeds = [torch.zeros_like(image_embeds) for _ in range(options.num_devices)]
             gathered_text_embeds = [torch.zeros_like(text_embeds) for _ in range(options.num_devices)]
-            augmented_gathered_image_embeds = [torch.zeros_like(outputs.augmented_image_embeds) for _ in range(options.num_devices)]
-            augmented_gathered_text_embeds = [torch.zeros_like(outputs.augmented_text_embeds) for _ in range(options.num_devices)]
+            augmented_gathered_image_embeds = [torch.zeros_like(augmented_image_embeds) for _ in range(options.num_devices)]
+            augmented_gathered_text_embeds = [torch.zeros_like(augmented_text_embeds) for _ in range(options.num_devices)]
             
             dist.all_gather(gathered_image_embeds, image_embeds)
             dist.all_gather(gathered_text_embeds, text_embeds)
-            dist.all_gather(augmented_gathered_image_embeds, outputs.augmented_image_embeds)
-            dist.all_gather(augmented_gathered_text_embeds, outputs.augmented_text_embeds)
+            dist.all_gather(augmented_gathered_image_embeds, augmented_image_embeds)
+            dist.all_gather(augmented_gathered_text_embeds, augmented_text_embeds)
             
             image_embeds = torch.cat(gathered_image_embeds[:options.rank] + [image_embeds] + gathered_image_embeds[options.rank + 1:])
             text_embeds  = torch.cat(gathered_text_embeds[:options.rank]+ [text_embeds] + gathered_text_embeds[options.rank + 1:])
-            augmented_image_embeds = torch.cat(augmented_gathered_image_embeds[:options.rank] + [outputs.augmented_image_embeds] + augmented_gathered_image_embeds[options.rank + 1:])
-            augmented_text_embeds  = torch.cat(augmented_gathered_text_embeds[:options.rank]+ [outputs.augmented_text_embeds] + augmented_gathered_text_embeds[options.rank + 1:])      
+            augmented_image_embeds = torch.cat(augmented_gathered_image_embeds[:options.rank] + [augmented_image_embeds] + augmented_gathered_image_embeds[options.rank + 1:])
+            augmented_text_embeds  = torch.cat(augmented_gathered_text_embeds[:options.rank]+ [augmented_text_embeds] + augmented_gathered_text_embeds[options.rank + 1:])      
         else:
             gathered_image_embeds = [torch.zeros_like(image_embeds) for _ in range(options.num_devices)]
             gathered_text_embeds = [torch.zeros_like(text_embeds) for _ in range(options.num_devices)]
