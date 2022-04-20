@@ -39,7 +39,50 @@ def get_validation_metrics(model, dataloader, options):
 
     return metrics
 
-def get_zeroshot_metrics(model, processor, test_dataloader, guide_dataloader, options):
+def get_backdoor_metrics(model, processor, test_dataloader, options):
+    logging.info("Started backdoor testing")
+
+    model.eval()
+    umodel = model.module if(options.distributed) else model
+
+    config = eval(open(f"{options.eval_test_data_dir}/classes.py", "r").read())
+    classes, templates = config["classes"], config["templates"]
+    assert options.backdoor_target in classes
+    backdoor_target_index = classes.index(options.backdoor_target)
+    
+    with torch.no_grad():
+        text_embeddings = []
+        for c in tqdm(classes):
+            text = [template(c) for template in templates]
+            text_tokens = processor.process_text(text)
+            text_input_ids, text_attention_mask = text_tokens["input_ids"].to(options.device), text_tokens["attention_mask"].to(options.device) 
+            text_embedding = umodel.get_text_features(input_ids = text_input_ids, attention_mask = text_attention_mask)
+            text_embedding /= text_embedding.norm(dim = -1, keepdim = True)
+            text_embedding = text_embedding.mean(dim = 0)
+            text_embedding /= text_embedding.norm()
+            text_embeddings.append(text_embedding)
+        text_embeddings = torch.stack(text_embeddings, dim = 1).to(options.device)
+
+    with torch.no_grad():       
+        probs = 0
+        scores = 0
+        
+        for image, label in tqdm(test_dataloader):
+            image, label = image.to(options.device), label.to(options.device)
+            image_embedding = umodel.get_image_features(image)
+            image_embedding /= image_embedding.norm(dim = -1, keepdim = True)
+            logits = image_embedding @ text_embeddings
+            _, indices = logits.max(dim = 1)
+            probs += torch.nn.Softmax(dim = 1)(logits)[:, backdoor_target_index].sum().squeeze().item()
+            scores += (indices == backdoor_target_index).sum().squeeze().item()
+        
+        results = {f"backdoor_success_rate": probs/test_dataloader.num_samples, f"backdoor_score": scores/test_dataloader.num_samples * 100}
+        
+    logging.info("Finished backdoor testing")
+
+    return results
+
+def get_zeroshot_metrics(model, processor, test_dataloader, options):
     logging.info("Started zeroshot testing")
 
     model.eval()
@@ -64,31 +107,11 @@ def get_zeroshot_metrics(model, processor, test_dataloader, guide_dataloader, op
         topk = [1, 3, 5, 10]
         correct = {k: 0 for k in topk}
         
-        guide_image_embeddings = []
-        if(guide_dataloader is not None):
-            for guide_image in tqdm(guide_dataloader):
-                guide_image = guide_image.to(options.device)
-                guide_image_embedding = umodel.get_image_features(guide_image)
-                guide_image_embedding /= guide_image_embedding.norm(dim = -1, keepdim = True)
-                guide_image_embeddings.append(guide_image_embedding)
-            guide_image_embedding = torch.cat(guide_image_embeddings, dim = 0)
-        
         for image, label in tqdm(test_dataloader):
             image, label = image.to(options.device), label.to(options.device)
             image_embedding = umodel.get_image_features(image)
             image_embedding /= image_embedding.norm(dim = -1, keepdim = True)
-
-            if(guide_dataloader is not None):
-                value = image_embedding @ guide_image_embedding.T
-                value, indices = torch.topk(value, options.guide_k, dim = 1)
-                value = (torch.ones(len(image_embedding), len(guide_image_embedding)) * -100).to(options.device).scatter(1, indices, value)
-                value -= value.max(dim = -1, keepdim = True)[0]
-                value = torch.exp(value)
-                value /= value.sum(dim = -1, keepdim = True)
-                logits = value @ (guide_image_embedding @ text_embeddings)
-            else:
-                logits = (image_embedding @ text_embeddings)
-                
+            logits = (image_embedding @ text_embeddings)
             ranks = logits.topk(max(topk), 1)[1].T
             predictions = ranks == label
 
@@ -205,11 +228,14 @@ def evaluate(epoch, model, processor, data, options):
             metrics.update(get_validation_metrics(model, data["validation"], options))
             
         if(data["eval_test"] is not None): 
-            if(data["eval_train"] is not None):
-                metrics.update(get_linear_probe_metrics(model, data["eval_train"], data["eval_test"], options))
-            else:
-                metrics.update(get_zeroshot_metrics(model, processor, data["eval_test"], data["eval_guide"], options))
-    
+            if(options.backdoor_target is not None):
+                metrics.update(get_backdoor_metrics(model, processor, data["eval_test"], options))
+            else:   
+                if(data["eval_train"] is not None):
+                    metrics.update(get_linear_probe_metrics(model, data["eval_train"], data["eval_test"], options))
+                else:
+                    metrics.update(get_zeroshot_metrics(model, processor, data["eval_test"], options))
+        
         if(metrics):
             logging.info("Results")
             for key, value in metrics.items():

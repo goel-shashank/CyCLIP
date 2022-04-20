@@ -165,16 +165,6 @@ def get_eval_train_dataloader(options, processor):
 
     return dataloader
 
-def get_eval_guide_dataloader(options, processor):
-    if(not options.guide or options.eval_guide_data is None): return
-
-    dataset = ImageDataset(path = options.eval_guide_data, transform = processor.process_image)
-    dataloader = DataLoader(dataset, batch_size = options.guide_batch_size, shuffle = False, num_workers = options.num_workers, pin_memory = True, sampler = None, drop_last = False)
-    dataloader.num_samples = len(dataset) 
-    dataloader.num_batches = len(dataloader)
-
-    return dataloader
-
 def load(options, processor):
     data = {}
     
@@ -182,6 +172,5 @@ def load(options, processor):
     data["validation"] = get_validation_dataloader(options, processor)
     data["eval_test"] = get_eval_test_dataloader(options, processor)
     data["eval_train"] = get_eval_train_dataloader(options, processor)
-    data["eval_guide"] = get_eval_guide_dataloader(options, processor)
 
     return data
