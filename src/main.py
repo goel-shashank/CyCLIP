@@ -169,6 +169,7 @@ if(__name__ == "__main__"):
                 options.device_ids = list(range(ngpus))
                 options.num_devices = npgus
             else:
+                options.device_ids = list(map(int, options.device_ids))
                 options.num_devices = len(options.device_ids)
             options.distributed = True
             mp.spawn(worker, nprocs = options.num_devices, args = (options, logger))
