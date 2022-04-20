@@ -36,7 +36,7 @@ def worker(rank, options, logger):
     set_logger(rank = rank, logger = logger, distributed = options.distributed)
 
     if(options.device == "cuda"):
-        options.device += ":" + str(options.rank if options.distributed else options.device_id)
+        options.device += ":" + str(options.device_ids[options.rank] if options.distributed else options.device_id)
 
     logging.info(f"Using {options.device} device")
 
@@ -58,10 +58,10 @@ def worker(rank, options, logger):
     if(options.device == "cpu"):
         model.float()
     else:
-        torch.cuda.set_device(options.rank if options.distributed else options.device_id)
+        torch.cuda.set_device(options.device_ids[options.rank] if options.distributed else options.device_id)
         model.to(options.device)
         if(options.distributed):
-            model = DDP(model, device_ids = [options.rank])
+            model = DDP(model, device_ids = [options.device_ids[options.rank]])
         
     data = load_data(options, processor)
 
@@ -165,8 +165,12 @@ if(__name__ == "__main__"):
             worker(0, options, logger)
         else:
             options.device = "cuda"
-            options.num_devices = ngpus
+            if(options.device_ids is None):
+                options.device_ids = list(range(ngpus))
+                options.num_devices = npgus
+            else:
+                options.num_devices = len(options.device_ids)
             options.distributed = True
-            mp.spawn(worker, nprocs = ngpus, args = (options, logger))
+            mp.spawn(worker, nprocs = options.num_devices, args = (options, logger))
     
     listener.stop()
