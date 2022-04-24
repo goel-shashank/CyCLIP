@@ -87,7 +87,8 @@ def train(epoch, model, data, optimizer, scheduler, scaler, options):
     umodel = model.module if(options.distributed) else model
 
     start = time.time()
-
+    
+    logging.info(f"Num samples: {dataloader.num_samples}, Num_batches: {dataloader.num_batches}")
     for index, batch in enumerate(dataloader): 
         step = dataloader.num_batches * epoch + index
         scheduler(step)
