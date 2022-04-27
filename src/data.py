@@ -78,19 +78,6 @@ def get_validation_dataloader(options, processor):
 
     return dataloader
 
-class ImageDataset(Dataset):
-    def __init__(self, path, transform):
-        self.root = os.path.dirname(path)
-        df = pd.read_csv(path)
-        self.images = df["image"]
-        self.transform = transform
-
-    def __len__(self):
-        return len(self.images)
-
-    def __getitem__(self, idx):
-        return self.transform(Image.open(os.path.join(self.root, self.images[idx])))
-        
 class ImageLabelDataset(Dataset):
     def __init__(self, root, transform):
         self.root = root
