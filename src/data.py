@@ -28,7 +28,7 @@ class ImageCaptionDataset(Dataset):
         self.inmodal = inmodal
         if(inmodal):
             self.augment_captions = processor.process_text([_augment_text(caption) for caption in df[caption_key].tolist()])
-
+        
         logging.debug("Loaded data")
 
     def __len__(self):
@@ -55,6 +55,10 @@ def get_train_dataloader(options, processor):
     batch_size = options.batch_size
 
     dataset = ImageCaptionDataset(path, image_key = options.image_key, caption_key = options.caption_key, delimiter = options.delimiter, processor = processor, inmodal = options.inmodal)
+    if(options.backdoor_data is not None):
+        backdoor_dataset = ImageCaptionDataset(options.backdoor_data, image_key = options.image_key, caption_key = options.caption_key, delimiter = options.delimiter, processor = processor, inmodal = options.inmodal)
+        dataset = torch.utils.data.ConcatDataset([backdoor_dataset, dataset])
+        
     sampler = DistributedSampler(dataset) if(options.distributed) else None
 
     dataloader = DataLoader(dataset, batch_size = batch_size, shuffle = (sampler is None), num_workers = options.num_workers, pin_memory = True, sampler = sampler, drop_last = True)

@@ -163,8 +163,6 @@ def get_linear_probe_metrics(model, train_dataloader, test_dataloader, options):
         output_dim = 37
     elif(options.eval_data_type == "Flowers102"):
         output_dim = 102
-    elif(options.eval_data_type == "SUN397"):
-        output_dim = 397
     elif(options.eval_data_type == "StanfordCars"):
         output_dim = 196
     elif(options.eval_data_type == "DTD"):
