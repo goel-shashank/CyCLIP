@@ -83,7 +83,7 @@ def train(epoch, model, data, optimizer, scheduler, scaler, options):
     model.train()
     criterion = nn.CrossEntropyLoss().to(options.device)
 
-    modulo = int(dataloader.num_samples / options.batch_size / options.num_devices / 10)
+    modulo = max(1, int(dataloader.num_samples / options.batch_size / 10))
     umodel = model.module if(options.distributed) else model
 
     start = time.time()
