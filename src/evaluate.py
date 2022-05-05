@@ -153,24 +153,48 @@ def get_linear_probe_metrics(model, train_dataloader, test_dataloader, options):
     
     input_dim = umodel.text_projection.shape[1]
     
-    if(options.eval_data_type == "CIFAR10"):
+    if(options.eval_data_type == "Caltech101"):
+        output_dim = 102
+        metric = "mean_per_class"
+    elif(options.eval_data_type == "CIFAR10"):
         output_dim = 10
+        metric = "accuracy"
     elif(options.eval_data_type == "CIFAR100"):
         output_dim = 100
-    elif(options.eval_data_type == "Food101"):
-        output_dim = 101
-    elif(options.eval_data_type == "OxfordIIITPet"):
-        output_dim = 37
-    elif(options.eval_data_type == "Flowers102"):
-        output_dim = 102
-    elif(options.eval_data_type == "StanfordCars"):
-        output_dim = 196
+        metric = "accuracy"
     elif(options.eval_data_type == "DTD"):
         output_dim = 47
-    elif(options.eval_data_type == "Caltech101"):
-        output_dim = 102
+        metric = "accuracy"
     elif(options.eval_data_type == "FGVCAircraft"):
         output_dim = 100
+        metric = "mean_per_class"
+    elif(options.eval_data_type == "Flowers102"):
+        output_dim = 102
+        metric = "mean_per_class"
+    elif(options.eval_data_type == "Food101"):
+        output_dim = 101
+        metric = "accuracy"
+    elif(options.eval_data_type == "GTSRB"):
+        output_dim = 43
+        metric = "accuracy"
+    elif(options.eval_data_type == "ImageNet1K"):
+        output_dim = 1000
+        metric = "accuracy"
+    elif(options.eval_data_type == "OxfordIIITPet"):
+        output_dim = 37
+        metric = "mean_per_class"
+    elif(options.eval_data_type == "RenderedSST2"):
+        output_dim = 2
+        metric = "accuracy"
+    elif(options.eval_data_type == "StanfordCars"):
+        output_dim = 196
+        metric = "accuracy"
+    elif(options.eval_data_type == "STL10"):
+        output_dim = 10
+        metric = "accuracy"
+    elif(options.eval_data_type == "SVHN"):
+        output_dim = 10
+        metric = "accuracy"
 
     classifier = LogisticRegression(input_dim = input_dim, output_dim = output_dim).to(options.device)
     optimizer = optim.AdamW([{"params": [parameter for name, parameter in classifier.named_parameters() if(("bias" in name) and parameter.requires_grad)], "weight_decay": 0}, {"params": [parameter for name, parameter in classifier.named_parameters() if(("bias" not in name) and parameter.requires_grad)], "weight_decay": 0.01}])
@@ -195,21 +219,32 @@ def get_linear_probe_metrics(model, train_dataloader, test_dataloader, options):
     classifier.eval()
     
     with torch.no_grad():
-        topk = [1, 3, 5, 10]
-        correct = {k: 0 for k in topk}
+        if(metric == "accuracy"):
+            correct = 0
+            for image, label in tqdm(test_dataloader):
+                image, label = image.to(options.device), label.to(options.device)
+                logits = classifier(umodel.get_image_features(image))
+                prediction = torch.argmax(logits, dim = 1)
+                correct += torch.sum(prediction == label).item()
 
-        for image, label in tqdm(test_dataloader):
-            image, label = image.to(options.device), label.to(options.device)
-            logits = classifier(umodel.get_image_features(image))
-            ranks = logits.topk(max(topk), 1)[1].T
-            predictions = ranks == label
+            results = {f"linear_probe_accuracy": correct / test_dataloader.num_samples}
+        else:
+            correct = torch.zeros(output_dim).to(options.device)
+            total = torch.zeros(output_dim).to(options.device)
+            for image, label in tqdm(test_dataloader):
+                image, label = image.to(options.device), label.to(options.device)
+                logits = classifier(umodel.get_image_features(image))
+                predictions = torch.argmax(logits, dim = 1)
+                
+                temp = torch.zeros(output_dim, len(label)).to(options.device)
+                temp[label, torch.arange(len(label))] = (predictions == label).float()
+                correct += temp.sum(1)
+                temp[label, torch.arange(len(label))] = 1                
+                total += temp.sum(1)
 
-            for k in topk:
-                correct[k] += torch.sum(torch.any(predictions[:k], dim = 0)).item() 
-
-    results = {f"linear_probe_top{k}": correct[k] / test_dataloader.num_samples for k in topk}
+            results = {f"linear_probe_mean_per_class": (correct / total).mean().cpu().item()}
+        
     logging.info("Finished linear probe testing")
-
     return results
 
 def evaluate(epoch, model, processor, data, options):

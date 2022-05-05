@@ -97,25 +97,35 @@ class ImageLabelDataset(Dataset):
 def get_eval_test_dataloader(options, processor):
     if(options.eval_test_data_dir is None): return
 
-    if(options.eval_data_type == "CIFAR10"):
+    if(options.eval_data_type == "Caltech101"):
+        dataset = ImageLabelDataset(root = options.eval_test_data_dir, transform = processor.process_image)
+    elif(options.eval_data_type == "CIFAR10"):
         dataset = torchvision.datasets.CIFAR10(root = os.path.dirname(options.eval_test_data_dir), download = True, train = False, transform = processor.process_image)
     elif(options.eval_data_type == "CIFAR100"):
         dataset = torchvision.datasets.CIFAR100(root = os.path.dirname(options.eval_test_data_dir), download = True, train = False, transform = processor.process_image)
-    elif(options.eval_data_type == "Food101"):
-        dataset = torchvision.datasets.Food101(root = os.path.dirname(options.eval_test_data_dir), download = True, split = "test", transform = processor.process_image)
-    elif(options.eval_data_type == "OxfordIIITPet"):
-        dataset = torchvision.datasets.OxfordIIITPet(root = os.path.dirname(options.eval_test_data_dir), download = True, split = "test", transform = processor.process_image)
-    elif(options.eval_data_type == "Flowers102"):
-        dataset = ImageLabelDataset(root = options.eval_test_data_dir, transform = processor.process_image)
-    elif(options.eval_data_type == "StanfordCars"):
-        dataset = torchvision.datasets.StanfordCars(root = os.path.dirname(options.eval_test_data_dir), download = True, split = "test", transform = processor.process_image)
     elif(options.eval_data_type == "DTD"):
         dataset = torchvision.datasets.DTD(root = os.path.dirname(options.eval_test_data_dir), download = True, split = "test", transform = processor.process_image)
-    elif(options.eval_data_type == "Caltech101"):
-        dataset = ImageLabelDataset(root = options.eval_test_data_dir, transform = processor.process_image)
     elif(options.eval_data_type == "FGVCAircraft"):
         dataset = torchvision.datasets.FGVCAircraft(root = os.path.dirname(options.eval_test_data_dir), download = True, split = "test", transform = processor.process_image)
-    elif(options.eval_data_type in ["ImageNet1K", "ImageNetSketch", "ImageNetV2", "ImageNet-A", "ImageNet-R"]):
+    elif(options.eval_data_type == "Flowers102"):
+        dataset = ImageLabelDataset(root = options.eval_test_data_dir, transform = processor.process_image)
+    elif(options.eval_data_type == "Food101"):
+        dataset = torchvision.datasets.Food101(root = os.path.dirname(options.eval_test_data_dir), download = True, split = "test", transform = processor.process_image)
+    elif(options.eval_data_type == "GTSRB"):
+        dataset = torchvision.datasets.GTSRB(root = os.path.dirname(options.eval_test_data_dir), download = True, split = "test", transform = processor.process_image)
+    elif(options.eval_data_type == "ImageNet1K"):
+        dataset = ImageLabelDataset(root = options.eval_test_data_dir, transform = processor.process_image)
+    elif(options.eval_data_type == "OxfordIIITPet"):
+        dataset = torchvision.datasets.OxfordIIITPet(root = os.path.dirname(options.eval_test_data_dir), download = True, split = "test", transform = processor.process_image)
+    elif(options.eval_data_type == "RenderedSST2"):
+        dataset = torchvision.datasets.RenderedSST2(root = os.path.dirname(options.eval_test_data_dir), download = True, split = "test", transform = processor.process_image)
+    elif(options.eval_data_type == "StanfordCars"):
+        dataset = torchvision.datasets.StanfordCars(root = os.path.dirname(options.eval_test_data_dir), download = True, split = "test", transform = processor.process_image)
+    elif(options.eval_data_type == "STL10"):
+        dataset = torchvision.datasets.STL10(root = os.path.dirname(options.eval_test_data_dir), download = True, split = "test", transform = processor.process_image)
+    elif(options.eval_data_type == "SVHN"):
+        dataset = torchvision.datasets.SVHN(root = os.path.dirname(options.eval_test_data_dir), download = True, split = "test", transform = processor.process_image)
+    elif(options.eval_data_type in ["ImageNetSketch", "ImageNetV2", "ImageNet-A", "ImageNet-R"]):
         dataset = ImageLabelDataset(root = options.eval_test_data_dir, transform = processor.process_image)
     else:
         raise Exception(f"Eval test dataset type {options.eval_data_type} is not supported")
@@ -129,24 +139,34 @@ def get_eval_test_dataloader(options, processor):
 def get_eval_train_dataloader(options, processor):
     if(not options.linear_probe or options.eval_train_data_dir is None): return
 
-    if(options.eval_data_type == "CIFAR10"):
+    if(options.eval_data_type == "Caltech101"):
+        dataset = ImageLabelDataset(root = options.eval_train_data_dir, transform = processor.process_image)
+    elif(options.eval_data_type == "CIFAR10"):
         dataset = torchvision.datasets.CIFAR10(root = os.path.dirname(options.eval_train_data_dir), download = True, train = True, transform = processor.process_image)
     elif(options.eval_data_type == "CIFAR100"):
-        dataset = torchvision.datasets.CIFAR100(root = os.path.dirname(options.eval_train_data_dir), download = True, train = True, transform = processor.process_image)
-    elif(options.eval_data_type == "Food101"):
-        dataset = torchvision.datasets.Food101(root = os.path.dirname(options.eval_train_data_dir), download = True, split = "train", transform = processor.process_image)
-    elif(options.eval_data_type == "OxfordIIITPet"):
-        dataset = torchvision.datasets.OxfordIIITPet(root = os.path.dirname(options.eval_train_data_dir), download = True, split = "trainval", transform = processor.process_image)
-    elif(options.eval_data_type == "Flowers102"):
-        dataset = ImageLabelDataset(root = options.eval_train_data_dir, transform = processor.process_image)
-    elif(options.eval_data_type == "StanfordCars"):
-        dataset = torchvision.datasets.StanfordCars(root = os.path.dirname(options.eval_train_data_dir), download = True, split = "train", transform = processor.process_image)
+        dataset = torchvision.datasets.CIFAR100(root = os.path.dirname(options.eval_test_data_dir), download = True, train = False, transform = processor.process_image)
     elif(options.eval_data_type == "DTD"):
         dataset = torch.utils.data.ConcatDataset([torchvision.datasets.DTD(root = os.path.dirname(options.eval_train_data_dir), download = True, split = "train", transform = processor.process_image), torchvision.datasets.DTD(root = os.path.dirname(options.eval_train_data_dir), download = True, split = "val", transform = processor.process_image)])
-    elif(options.eval_data_type == "Caltech101"):
-        dataset = ImageLabelDataset(root = options.eval_train_data_dir, transform = processor.process_image)
     elif(options.eval_data_type == "FGVCAircraft"):
         dataset = torchvision.datasets.FGVCAircraft(root = os.path.dirname(options.eval_train_data_dir), download = True, split = "trainval", transform = processor.process_image)
+    elif(options.eval_data_type == "Flowers102"):
+        dataset = ImageLabelDataset(root = options.eval_train_data_dir, transform = processor.process_image)
+    elif(options.eval_data_type == "Food101"):
+        dataset = torchvision.datasets.Food101(root = os.path.dirname(options.eval_train_data_dir), download = True, split = "train", transform = processor.process_image)
+    elif(options.eval_data_type == "GTSRB"):
+        dataset = torchvision.datasets.GTSRB(root = os.path.dirname(options.eval_train_data_dir), download = True, split = "train", transform = processor.process_image)
+    elif(options.eval_data_type == "ImageNet1K"):
+        dataset = ImageLabelDataset(root = options.eval_train_data_dir, transform = processor.process_image)
+    elif(options.eval_data_type == "OxfordIIITPet"):
+        dataset = torchvision.datasets.OxfordIIITPet(root = os.path.dirname(options.eval_train_data_dir), download = True, split = "trainval", transform = processor.process_image)
+    elif(options.eval_data_type == "RenderedSST2"):
+        dataset = torchvision.datasets.RenderedSST2(root = os.path.dirname(options.eval_train_data_dir), download = True, split = "train", transform = processor.process_image)
+    elif(options.eval_data_type == "StanfordCars"):
+        dataset = torchvision.datasets.StanfordCars(root = os.path.dirname(options.eval_train_data_dir), download = True, split = "train", transform = processor.process_image)
+    elif(options.eval_data_type == "STL10"):
+        dataset = torchvision.datasets.STL10(root = os.path.dirname(options.eval_train_data_dir), download = True, split = "train", transform = processor.process_image)
+    elif(options.eval_data_type == "SVHN"):
+        dataset = torchvision.datasets.SVHN(root = os.path.dirname(options.eval_train_data_dir), download = True, split = "train", transform = processor.process_image)
     else:
         raise Exception(f"Eval train dataset type {options.eval_data_type} is not supported")
 

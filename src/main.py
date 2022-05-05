@@ -167,11 +167,12 @@ if(__name__ == "__main__"):
             options.device = "cuda"
             if(options.device_ids is None):
                 options.device_ids = list(range(ngpus))
-                options.num_devices = npgus
+                options.num_devices = ngpus
             else:
                 options.device_ids = list(map(int, options.device_ids))
                 options.num_devices = len(options.device_ids)
             options.distributed = True
+            os.environ["NCCL_P2P_DISABLE"] = "1"
             mp.spawn(worker, nprocs = options.num_devices, args = (options, logger))
     
     listener.stop()
