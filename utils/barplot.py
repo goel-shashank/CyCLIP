@@ -22,39 +22,39 @@ sns.set_style("white")
 k = 1
 
 data_fine_top_1 = {
-    "Dataset": ["CIFAR100", "ImageNet", "ImageNetV2", "ImageNetSketch"],
-    "CLIP": [43.55,	34.18, 31.11, 25.11],
-    "CyCLIP": [47.11, 35.46, 33.01, 26.42],
+    "Dataset": ["CIFAR100", "ImageNet1K", "ImageNetSketch", "ImageNetV2"],
+    "CLIP": [43.55,	34.18, 25.11, 31.11],
+    "CyCLIP": [47.11, 35.46, 26.42, 33.01],
 }
 
 data_coarse_top_1 = {
-    "Dataset": ["CIFAR100", "ImageNet", "ImageNetV2", "ImageNetSketch"],
-    "CLIP": [34.82, 52.10, 47.24, 37.03],
-    "CyCLIP": [40.37, 56.79, 52.15, 41.57],
+    "Dataset": ["CIFAR100", "ImageNet1K", "ImageNetSketch", "ImageNetV2"],
+    "CLIP": [34.82, 52.10, 37.03, 47.24],
+    "CyCLIP": [40.37, 56.79, 41.57, 52.15],
 }
 
 data_fine_top_2 = {
-    "Dataset": ["CIFAR100", "ImageNet", "ImageNetV2", "ImageNetSketch"],
-    "CLIP": [67.65, 46.53, 43.85, 36.69],
-    "CyCLIP": [68.67, 48.22, 45.37, 38.34],
+    "Dataset": ["CIFAR100", "ImageNet1K", "ImageNetSketch", "ImageNetV2"],
+    "CLIP": [67.65, 46.53, 36.69, 43.85],
+    "CyCLIP": [68.67, 48.22, 38.34, 45.37],
 }
 
 data_coarse_top_2 = {
-    "Dataset": ["CIFAR100", "ImageNet", "ImageNetV2", "ImageNetSketch"],
-    "CLIP": [49.51, 66.06, 61.42, 49.93],
-    "CyCLIP": [56.26, 69.66, 65.27, 54.59],
+    "Dataset": ["CIFAR100", "ImageNet1K", "ImageNetSketch", "ImageNetV2"],
+    "CLIP": [49.51, 66.06, 49.93, 61.42],
+    "CyCLIP": [56.26, 69.66, 54.59, 65.27],
 }
 
 data_fine_top_3 = {
-    "Dataset": ["CIFAR100", "ImageNet", "ImageNetV2", "ImageNetSketch"],
-    "CLIP": [82.41, 53.95, 51.61, 44.66],
-    "CyCLIP": [83.32, 55.43, 52.85, 46.09],
+    "Dataset": ["CIFAR100", "ImageNet1K", "ImageNetSketch", "ImageNetV2"],
+    "CLIP": [82.41, 53.95, 44.66, 51.61],
+    "CyCLIP": [83.32, 55.43, 46.09, 52.85],
 }
 
 data_coarse_top_3 = {
-    "Dataset": ["CIFAR100", "ImageNet", "ImageNetV2", "ImageNetSketch"],
-    "CLIP": [58.39, 73.20, 69.09, 57.61],
-    "CyCLIP": [65.65, 76.45, 72.39, 62.21],
+    "Dataset": ["CIFAR100", "ImageNet1K", "ImageNetSketch", "ImageNetV2"],
+    "CLIP": [58.39, 73.20, 57.61, 69.09],
+    "CyCLIP": [65.65, 76.45, 62.21, 72.39],
 }
 
 data = (eval(f"data_fine_top_{k}"), eval(f"data_coarse_top_{k}"))
