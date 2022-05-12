@@ -155,7 +155,7 @@ def get_linear_probe_metrics(model, train_dataloader, test_dataloader, options):
     
     if(options.eval_data_type == "Caltech101"):
         output_dim = 102
-        metric = "mean_per_class"
+        metric = "accuracy"
     elif(options.eval_data_type == "CIFAR10"):
         output_dim = 10
         metric = "accuracy"
@@ -167,10 +167,10 @@ def get_linear_probe_metrics(model, train_dataloader, test_dataloader, options):
         metric = "accuracy"
     elif(options.eval_data_type == "FGVCAircraft"):
         output_dim = 100
-        metric = "mean_per_class"
+        metric = "accuracy"
     elif(options.eval_data_type == "Flowers102"):
         output_dim = 102
-        metric = "mean_per_class"
+        metric = "accuracy"
     elif(options.eval_data_type == "Food101"):
         output_dim = 101
         metric = "accuracy"
@@ -182,7 +182,7 @@ def get_linear_probe_metrics(model, train_dataloader, test_dataloader, options):
         metric = "accuracy"
     elif(options.eval_data_type == "OxfordIIITPet"):
         output_dim = 37
-        metric = "mean_per_class"
+        metric = "accuracy"
     elif(options.eval_data_type == "RenderedSST2"):
         output_dim = 2
         metric = "accuracy"
