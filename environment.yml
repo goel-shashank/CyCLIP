@@ -3,6 +3,7 @@ channels:
 dependencies:
   - pip
   - pip:
+    - albumentations
     - dill
     - einops
     - ftfy
@@ -21,6 +22,7 @@ dependencies:
     - scikit-image
     - seaborn
     - tensorflow
+    - timm
     - tokenizers
     - torchvision
     - tqdm

@@ -1,3 +1,4 @@
+albumentations
 dill
 einops
 ftfy
@@ -16,6 +17,7 @@ regex
 scikit-image
 seaborn
 tensorflow
+timm
 tokenizers
 torchvision
 tqdm
