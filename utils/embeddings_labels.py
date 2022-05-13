@@ -43,12 +43,12 @@ def get_model(options):
     return model, processor
 
 def get_data(options, processor):
-    if(options.input_type in ["Imagenet", "ImagenetSketch", "ImagenetV2"]):
+    if(options.input_type in ["ImageNet1K", "ImageNetSketch", "ImageNetV2"]):
         dataset = ImageNetDataset(root = options.input_dir, transform = processor.process_image)
     elif(options.input_type == "CIFAR10"):
-        dataset = torchvision.datasets.CIFAR10(root = options.input_dir, download = True, train = False, transform = processor.process_image)
+        dataset = torchvision.datasets.CIFAR10(root = os.path.dirname(options.input_dir), download = True, train = "train" in options.input_dir, transform = processor.process_image)
     elif(options.input_type == "CIFAR100"):
-        dataset = torchvision.datasets.CIFAR100(root = options.input_dir, download = True, train = False, transform = processor.process_image)
+        dataset = torchvision.datasets.CIFAR100(root = os.path.dirname(options.input_dir), download = True, train = "train" in options.input_dir, transform = processor.process_image)
     else:
         raise Exception("Test dataset type {options.input_type} is not supported")    
     dataloader = DataLoader(dataset, batch_size = options.batch_size, shuffle = False, num_workers = options.num_workers, pin_memory = True, drop_last = False)
@@ -58,7 +58,7 @@ def generate(model, dataloader, processor, options):
     output = {"image_embeddings": [], "text_embeddings": [], "labels": [], "classes": [], "superclasses": []}
     
     with torch.no_grad():   
-        config = eval(open(f"{options.input_dir}/classes.py", "r").read())
+        config = eval(open(options.input_classes, "r").read())
         classes, templates = config["classes"], config["templates"]
         output["classes"] = classes
         
@@ -100,11 +100,12 @@ def embeddings(options):
 if(__name__ == "__main__"):
     parser = argparse.ArgumentParser()
     
-    parser.add_argument("--input_dir", type = str, default = "data/CIFAR10/test", help = "Input dir")
+    parser.add_argument("--input_dir", type = str, default = "data/CIFAR10/train", help = "Input dir")
     parser.add_argument("--input_type", type = str, default = "CIFAR10", help = "Input data type")
-    parser.add_argument("--output_file", type = str, default = "analysis/embeddings/clip/CIFAR10.pkl", help = "Output file")
+    parser.add_argument("--input_classes", type = str, default = "data/CIFAR10/test/classes.py", help = "Input classes")
+    parser.add_argument("--output_file", type = str, default = "analysis/embeddings/cyclip/CIFAR10.train.pkl", help = "Output file")
     parser.add_argument("--model_name", type = str, default = "RN50", choices = ["RN50", "RN101", "RN50x4", "ViT-B/32"], help = "Model Name")
-    parser.add_argument("--checkpoint", type = str, default = "checkpoints/inmodal-crossmodal-symmetric/epoch_64.pt", help = "Path to checkpoint")
+    parser.add_argument("--checkpoint", type = str, default = "checkpoints/cyclip-0.5/best.pt", help = "Path to checkpoint")
     parser.add_argument("--batch_size", type = int, default = 256, help = "Batch Size")
     parser.add_argument("--num_workers", type = int, default = 8, help = "Number of workers")
 
