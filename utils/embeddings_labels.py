@@ -43,7 +43,7 @@ def get_model(options):
     return model, processor
 
 def get_data(options, processor):
-    if(options.input_type in ["ImageNet1K", "ImageNetSketch", "ImageNetV2"]):
+    if(options.input_type in ["ImageNet1K", "ImageNetSketch", "ImageNetV2", "ImageNet-A", "ImageNet-R"]):
         dataset = ImageNetDataset(root = options.input_dir, transform = processor.process_image)
     elif(options.input_type == "CIFAR10"):
         dataset = torchvision.datasets.CIFAR10(root = os.path.dirname(options.input_dir), download = True, train = "train" in options.input_dir, transform = processor.process_image)
@@ -100,14 +100,14 @@ def embeddings(options):
 if(__name__ == "__main__"):
     parser = argparse.ArgumentParser()
     
-    parser.add_argument("--input_dir", type = str, default = "data/CIFAR10/train", help = "Input dir")
-    parser.add_argument("--input_type", type = str, default = "CIFAR10", help = "Input data type")
-    parser.add_argument("--input_classes", type = str, default = "data/CIFAR10/test/classes.py", help = "Input classes")
-    parser.add_argument("--output_file", type = str, default = "analysis/embeddings/cyclip/CIFAR10.train.pkl", help = "Output file")
+    parser.add_argument("--input_dir", type = str, default = "data/CIFAR100/train", help = "Input dir")
+    parser.add_argument("--input_type", type = str, default = "CIFAR100", help = "Input data type")
+    parser.add_argument("--input_classes", type = str, default = "data/CIFAR100/test/classes.py", help = "Input classes")
+    parser.add_argument("--output_file", type = str, default = "analysis/embeddings/i-cyclip-0.5/CIFAR100.train.pkl", help = "Output file")
     parser.add_argument("--model_name", type = str, default = "RN50", choices = ["RN50", "RN101", "RN50x4", "ViT-B/32"], help = "Model Name")
-    parser.add_argument("--checkpoint", type = str, default = "checkpoints/cyclip-0.5/best.pt", help = "Path to checkpoint")
+    parser.add_argument("--checkpoint", type = str, default = "checkpoints/i-cyclip-0.5/best.pt", help = "Path to checkpoint")
     parser.add_argument("--batch_size", type = int, default = 256, help = "Batch Size")
-    parser.add_argument("--num_workers", type = int, default = 8, help = "Number of workers")
+    parser.add_argument("--num_workers", type = int, default = 16, help = "Number of workers")
 
     options = parser.parse_args()
     embeddings(options)

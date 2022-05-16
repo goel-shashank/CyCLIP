@@ -20,11 +20,11 @@ def run(options):
         dataloader = torch.utils.data.DataLoader(dataset, batch_size = batch_size)
         
         uniformity = torch.zeros([]).to(device)
-        for batch in dataloader:
+        for index, batch in enumerate(dataloader):
             image_embedding = batch[0]
             cross = image_embedding @ text_embeddings.t()
-            uniformity += (-cross).exp().sum()
-        uniformity /= (len(image_embeddings) * len(image_embeddings))
+            uniformity += (-cross).exp().sum() - (-cross.diag(index * batch_size)).exp().sum()
+        uniformity /= (len(image_embeddings) * (len(image_embeddings) - 1))
         uniformity = uniformity.log()
         
         print(f"Alignment: {alignment.cpu().item()}")
@@ -32,6 +32,6 @@ def run(options):
         
 if(__name__ == "__main__"):
     parser = argparse.ArgumentParser()
-    parser.add_argument("-e,--embeddings", dest = "embeddings", type = str, default = "analysis/embeddings/cyclip/CIFAR100.pkl", help = "Input file")
+    parser.add_argument("-e,--embeddings", dest = "embeddings", type = str, default = "analysis/embeddings/clip/CIFAR10.test.pkl", help = "Input file")
     options = parser.parse_args()
     run(options)

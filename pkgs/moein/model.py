@@ -27,8 +27,8 @@ class TextEncoder(nn.Module):
         else:
             self.model = DistilBertModel(config = DistilBertConfig())
             
-        for paramter in self.model.parameters():
-            paramter.requires_grad = True
+        for parameter in self.model.parameters():
+            parameter.requires_grad = True
 
     def forward(self, input_ids, attention_mask):
         return self.model(input_ids = input_ids, attention_mask = attention_mask).last_hidden_state[:, 0, :]
