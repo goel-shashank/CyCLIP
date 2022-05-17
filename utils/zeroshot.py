@@ -24,12 +24,12 @@ def run(options):
                 correct[k] += torch.sum(torch.any(predictions[:k], dim = 0)).item() 
 
         for k in options.k:
-            print(f"Zeroshot top {k:2d}: {correct[k] / len(dataset) * 100.0}")    
+            print(f"Zeroshot top {k}: {correct[k] / len(dataset) * 100.0}")    
         
 if(__name__ == "__main__"):
     parser = argparse.ArgumentParser()
-    parser.add_argument("--embeddings", type = str, default = None, help = "Input test embeddings file")
+    parser.add_argument("--embeddings", type = str, default = "analysis/embeddings/cyclip-0.5-3M/ImageNet-R.pkl", help = "Input test embeddings file")
     parser.add_argument("--batch_size", type = int, default = 32, help = "Batch size")
-    parser.add_argument("--k", nargs = "+", default = [1, 3, 5, 10])
+    parser.add_argument("--k", nargs = "+", default = [1, 3, 5])
     options = parser.parse_args()
     run(options)
