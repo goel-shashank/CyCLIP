@@ -1,5 +1,4 @@
 import os
-import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
@@ -42,4 +41,4 @@ figure.delaxes(axes[2][4])
 figure.tight_layout()
 
 os.makedirs("analysis/plots", exist_ok = True)
-plt.savefig(f"analysis/plots/gridbarplot.png")
+plt.savefig(f"analysis/plots/linear_probe_plot.png")

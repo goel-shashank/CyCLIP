@@ -58,39 +58,43 @@ data_coarse_top_3 = {
     "CyCLIP": [65.65, 76.45, 72.39, 62.21, 34.83, 63.12],
 }
 
-data = (eval(f"data_fine_top_{k}"), eval(f"data_coarse_top_{k}"))
-
-figure, axes = plt.subplots(1, 2, figsize = (12, 5))
-
-X_axis = np.arange(1, 7)
-Y_axis = np.array([0, 10, 20, 30, 40, 50, 60, 70])
-
-for index in range(2):
-    if(index == 0):
-        yaxis_label = f"Fine-grained Top{k} Accuracy (%)"
-        xaxis_label = "(a)"
-    else:
-        yaxis_label = f"Coarse-grained Top{k} Accuracy (%)"
-        xaxis_label = "(b)"
-
-    axes[index].set_ylim(0, 80)
-    axes[index].set_xlabel(xaxis_label)
-    axes[index].set_ylabel(yaxis_label)
-    axes[index].set_xticks(X_axis)
-    axes[index].set_yticks(Y_axis)
-    axes[index].set_xticklabels(data[index]["Dataset"], fontsize = 12, rotation = 30)
-    axes[index].set_yticklabels(Y_axis, fontsize = 12, rotation = 0)
-    axes[index].bar(X_axis, data[index]["CLIP"], label = "CLIP", width = 0.36, color = "brown")
-    axes[index].bar(X_axis + 0.36, data[index]["CyCLIP"], width = 0.36, label = "CyCLIP")
+ylims = {1: 80, 2: 100, 3: 100}
+for k in [1, 2, 3]:
+    plt.clf()
     
-    for i, v in enumerate(data[index]["CLIP"]):
-        axes[index].text(i + 0.625, v + 1, v, fontsize = 11)
-        axes[index].text(i + 1.225, data[index]["CyCLIP"][i] + 1, str(data[index]["CyCLIP"][i]), fontsize = 11)
+    data = (eval(f"data_fine_top_{k}"), eval(f"data_coarse_top_{k}"))
 
-    axes[index].legend(prop = {"size": 12})
-    
-plt.tight_layout()
-plt.subplots_adjust(wspace = 0.225)
+    figure, axes = plt.subplots(1, 2, figsize = (12, 5))
 
-os.makedirs("analysis/plots", exist_ok = True)
-plt.savefig(f"analysis/plots/fine_coarse_top{k}.png")
+    X_axis = np.arange(1, 7)
+    Y_axis = np.arange(0, ylims[k], 10)
+
+    for index in range(2):
+        if(index == 0):
+            yaxis_label = f"Fine-grained Top{k} Accuracy (%)"
+            xaxis_label = "(a)"
+        else:
+            yaxis_label = f"Coarse-grained Top{k} Accuracy (%)"
+            xaxis_label = "(b)"
+
+        axes[index].set_ylim(0, ylims[k])
+        axes[index].set_xlabel(xaxis_label)
+        axes[index].set_ylabel(yaxis_label)
+        axes[index].set_xticks(X_axis)
+        axes[index].set_yticks(Y_axis)
+        axes[index].set_xticklabels(data[index]["Dataset"], fontsize = 12, rotation = 30)
+        axes[index].set_yticklabels(Y_axis, fontsize = 12, rotation = 0)
+        axes[index].bar(X_axis, data[index]["CLIP"], label = "CLIP", width = 0.35, color = "brown", alpha = 0.85)
+        axes[index].bar(X_axis + 0.37, data[index]["CyCLIP"], width = 0.35, label = "CyCLIP", alpha = 0.85)
+        
+        for i, v in enumerate(data[index]["CLIP"]):
+            axes[index].text(i + 0.625, v + 1, v, fontsize = 11)
+            axes[index].text(i + 1.200, data[index]["CyCLIP"][i] + 1, str(data[index]["CyCLIP"][i]), fontsize = 11)
+
+        axes[index].legend(prop = {"size": 12})
+        
+    plt.tight_layout()
+    plt.subplots_adjust(wspace = 0.225)
+
+    os.makedirs("analysis/plots", exist_ok = True)
+    plt.savefig(f"analysis/plots/fine_coarse_top{k}.png")
