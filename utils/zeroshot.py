@@ -28,7 +28,7 @@ def run(options):
         
 if(__name__ == "__main__"):
     parser = argparse.ArgumentParser()
-    parser.add_argument("--embeddings", type = str, default = "analysis/embeddings/i-cyclip-0.5/ImageNetV2.pkl", help = "Input test embeddings file")
+    parser.add_argument("--embeddings", type = str, default = "analysis/embeddings/clip/ImageNet1K.pkl", help = "Input test embeddings file")
     parser.add_argument("--batch_size", type = int, default = 32, help = "Batch size")
     parser.add_argument("--k", nargs = "+", default = [1, 3, 5])
     options = parser.parse_args()

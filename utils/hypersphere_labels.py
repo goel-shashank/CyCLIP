@@ -32,6 +32,6 @@ def run(options):
         
 if(__name__ == "__main__"):
     parser = argparse.ArgumentParser()
-    parser.add_argument("-e,--embeddings", dest = "embeddings", type = str, default = "analysis/embeddings/clip/CIFAR10.test.pkl", help = "Input file")
+    parser.add_argument("-e,--embeddings", dest = "embeddings", type = str, default = "analysis/embeddings/clip/ImageNet1K.validation.pkl", help = "Input file")
     options = parser.parse_args()
     run(options)

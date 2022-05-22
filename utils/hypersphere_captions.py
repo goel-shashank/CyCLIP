@@ -19,6 +19,6 @@ def run(options):
         
 if(__name__ == "__main__"):
     parser = argparse.ArgumentParser()
-    parser.add_argument("-e,--embeddings", dest = "embeddings", type = str, default = "analysis/embeddings/cyclip/CC3M.validation.pkl", help = "Input file")
+    parser.add_argument("-e,--embeddings", dest = "embeddings", type = str, default = "analysis/embeddings/clip/CC3M.validation.pkl", help = "Input file")
     options = parser.parse_args()
     run(options)
