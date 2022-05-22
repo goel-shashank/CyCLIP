@@ -43,7 +43,7 @@ def get_model(options):
     return model, processor
 
 def get_data(options, processor):
-    if(options.input_type in ["ImageNet1K", "ImageNetSketch", "ImageNetV2", "ImageNet-A", "ImageNet-R"]):
+    if(options.input_type in ["ImageNet1K", "ImageNetSketch", "ImageNetV2", "ImageNet-A", "ImageNet-R", "DogsvsCats"]):
         dataset = ImageNetDataset(root = options.input_dir, transform = processor.process_image)
     elif(options.input_type == "CIFAR10"):
         dataset = torchvision.datasets.CIFAR10(root = os.path.dirname(options.input_dir), download = True, train = "train" in options.input_dir, transform = processor.process_image)

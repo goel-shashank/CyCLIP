@@ -4,11 +4,11 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 params = {
-    "axes.labelsize": 14,
-    "axes.titlesize": 14,
-    "xtick.labelsize": 14,
-    "ytick.labelsize": 14,
-    "figure.titlesize": 14,
+    "axes.labelsize": 16,
+    "axes.titlesize": 16,
+    "xtick.labelsize": 16,
+    "ytick.labelsize": 16,
+    "figure.titlesize": 16,
     "font.family": "Liberation Mono"
 }
 
@@ -36,13 +36,14 @@ data[2] = ("(c) ImageNet1K", {
 figure, axes = plt.subplots(1, 3, figsize = (16, 5))
 
 for index in range(3):
-    axes[index].set_xlabel(data[index][0], fontsize = 16, labelpad = 12)
+    axes[index].set_xlabel(data[index][0], fontsize = 18, labelpad = 12)
     if(index == 0): axes[index].set_ylabel("Consistency Score (%)", labelpad = 12)
     axes[index].set_xticks(np.arange(4))
-    axes[index].set_xticklabels(["Top-1", "Top-3", "Top-5", "Top-10"], fontsize = 12, rotation = 0)
-    axes[index].plot(np.arange(4), data[index][1]["CLIP"], "*-", markersize = 15, label = "CLIP", color = "brown")
-    axes[index].plot(np.arange(4), data[index][1]["CyCLIP"], "^-", markersize = 15, label = "CyCLIP")
-    axes[index].legend(prop = {"size": 14})
+    axes[index].set_xticklabels(["Top1", "Top3", "Top5", "Top10"], fontsize = 14, rotation = 0)
+    axes[index].plot(np.arange(4), data[index][1]["CLIP"], "*-", markersize = 12, label = "CLIP", color = "brown")
+    axes[index].plot(np.arange(4), data[index][1]["CyCLIP"], "^-", markersize = 10, label = "CyCLIP")
+    axes[index].legend(prop = {"size": 16})
+    axes[index].set_ylim(0, 80)
 
 plt.tight_layout()
 plt.subplots_adjust(wspace = 0.225)

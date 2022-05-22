@@ -5,10 +5,10 @@ import matplotlib.pyplot as plt
 
 params = {
     "figure.figsize": (10, 5),
-    "legend.fontsize": 14,
-    "axes.labelsize": 14,
-    "xtick.labelsize": 14,
-    "ytick.labelsize": 14,
+    "legend.fontsize": 16,
+    "axes.labelsize": 16,
+    "xtick.labelsize": 16,
+    "ytick.labelsize": 16,
     "font.family": "Liberation Mono"
 }
 
@@ -37,18 +37,18 @@ cyclip = {
 for dataset in ["ImageNetV2", "ImageNetSketch", "ImageNet-A", "ImageNet-R"]:
     plt.clf()
     
-    plt.scatter(clip["ImageNet1K"][0], clip[dataset][0], marker = "^", s = 60, label = f"CLIP {clip['Datasize'][0]}")
-    plt.scatter(clip["ImageNet1K"][1], clip[dataset][1], marker = "^", s = 60, label = f"CLIP {clip['Datasize'][1]}")
-    plt.scatter(clip["ImageNet1K"][2], clip[dataset][2], marker = "^", s = 60, label = f"CLIP {clip['Datasize'][2]}")
-    plt.scatter(clip["ImageNet1K"][3], clip[dataset][3], marker = "^", s = 60, label = f"CLIP {clip['Datasize'][3]}")
+    plt.scatter(clip["ImageNet1K"][0], clip[dataset][0], marker = "^", s = 80, label = f"CLIP-{clip['Datasize'][0]}")
+    plt.scatter(clip["ImageNet1K"][1], clip[dataset][1], marker = "^", s = 80, label = f"CLIP-{clip['Datasize'][1]}")
+    plt.scatter(clip["ImageNet1K"][2], clip[dataset][2], marker = "^", s = 80, label = f"CLIP-{clip['Datasize'][2]}")
+    plt.scatter(clip["ImageNet1K"][3], clip[dataset][3], marker = "^", s = 80, label = f"CLIP-{clip['Datasize'][3]}")
 
-    plt.scatter(cyclip["ImageNet1K"][0], cyclip[dataset][0], marker = "*", s = 72, label = f"CyCLIP {cyclip['Datasize'][0]}")
-    plt.scatter(cyclip["ImageNet1K"][1], cyclip[dataset][1], marker = "*", s = 72, label = f"CyCLIP {cyclip['Datasize'][1]}")
-    plt.scatter(cyclip["ImageNet1K"][2], cyclip[dataset][2], marker = "*", s = 72, label = f"CyCLIP {cyclip['Datasize'][2]}")
-    plt.scatter(cyclip["ImageNet1K"][3], cyclip[dataset][3], marker = "*", s = 72, label = f"CyCLIP {cyclip['Datasize'][3]}")
+    plt.scatter(cyclip["ImageNet1K"][0], cyclip[dataset][0], marker = "*", s = 96, label = f"CyCLIP-{cyclip['Datasize'][0]}")
+    plt.scatter(cyclip["ImageNet1K"][1], cyclip[dataset][1], marker = "*", s = 96, label = f"CyCLIP-{cyclip['Datasize'][1]}")
+    plt.scatter(cyclip["ImageNet1K"][2], cyclip[dataset][2], marker = "*", s = 96, label = f"CyCLIP-{cyclip['Datasize'][2]}")
+    plt.scatter(cyclip["ImageNet1K"][3], cyclip[dataset][3], marker = "*", s = 96, label = f"CyCLIP-{cyclip['Datasize'][3]}")
 
-    plt.xlabel("Zero-shot accuracy on ImageNet1K (%)", labelpad = 12)
-    plt.ylabel(f"Zero-shot accuracy on {dataset} (%)", labelpad = 12)
+    plt.xlabel("Top1 Accuracy on ImageNet1K (%)", labelpad = 12)
+    plt.ylabel(f"Top1 Accuracy on {dataset} (%)", labelpad = 12)
     xpoints = ypoints = plt.xlim()
     plt.plot(xpoints, ypoints, linestyle = "--", color = "k", lw = 2, scalex = False, scaley = False, label = "y = x")
 
