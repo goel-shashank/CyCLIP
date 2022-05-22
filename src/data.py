@@ -1,8 +1,6 @@
 import os
-from pickle import FALSE
 import torch
 import logging
-import itertools
 import torchvision
 import pandas as pd
 from PIL import Image, ImageFile
