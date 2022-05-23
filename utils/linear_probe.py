@@ -82,7 +82,7 @@ def run(options):
     
     classifier.train()
 
-    bar = tqdm(range(options.num_epochs))
+    bar = tqdm(range(options.num_epochs), leave = True)
     for epoch in bar:
         for index, (image_embedding, label) in enumerate(train_dataloader):
             step = len(train_dataloader) * epoch + index
@@ -99,13 +99,13 @@ def run(options):
     
     with torch.no_grad():
         correct = 0
-        for image_embedding, label in tqdm(test_dataloader):
+        for image_embedding, label in tqdm(test_dataloader, leave = True):
             image_embedding, label = image_embedding.to(device), label.to(device)
             logits = classifier(image_embedding)
             prediction = torch.argmax(logits, dim = 1)
             correct += torch.sum(prediction == label).item()
     
-    print(f"Linear probe accuracy: {correct / test_dataloader.num_samples * 100.0}")
+    print(correct / test_dataloader.num_samples * 100.0)
          
 if(__name__ == "__main__"):
     parser = argparse.ArgumentParser()

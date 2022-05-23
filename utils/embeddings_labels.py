@@ -113,39 +113,43 @@ def get_train_dataset(options, processor):
     return dataset
 
 def generate(model, dataloader, processor, options):
-    output = {"image_embeddings": [], "text_embeddings": [], "labels": [], "classes": [], "superclasses": []}
-    
+    # output = {"image_embeddings": [], "text_embeddings": [], "un_image_embeddings": [], "labels": [], "classes": [], "superclasses": []}
+    output = pickle.load(open(options.output_file, "rb"))
+    output["un_image_embeddings"] = []
     with torch.no_grad():
-        if(os.path.exists(options.data_classes)):   
-            config = eval(open(options.data_classes, "r").read())
-            classes, templates = config["classes"], config["templates"]
-            output["classes"] = classes
+        # if(os.path.exists(options.data_classes)):   
+        #     config = eval(open(options.data_classes, "r").read())
+        #     classes, templates = config["classes"], config["templates"]
+        #     output["classes"] = classes
             
-            if("superclasses" in config):
-                output["superclasses"] = config["superclasses"]
+        #     if("superclasses" in config):
+        #         output["superclasses"] = config["superclasses"]
             
-            text_embeddings = []
-            for c in tqdm(classes):
-                text = [template(c) for template in templates]
-                text_tokens = processor.process_text(text)
-                text_input_ids, text_attention_mask = text_tokens["input_ids"].to(options.device), text_tokens["attention_mask"].to(options.device) 
-                text_embedding = model.get_text_features(input_ids = text_input_ids, attention_mask = text_attention_mask)
-                text_embedding /= text_embedding.norm(dim = -1, keepdim = True)
-                text_embedding = text_embedding.mean(dim = 0)
-                text_embedding /= text_embedding.norm()
-                text_embeddings.append(text_embedding)
-            text_embeddings = torch.stack(text_embeddings, dim = 1).to(options.device).t()
+        #     text_embeddings = []
+        #     for c in tqdm(classes):
+        #         text = [template(c) for template in templates]
+        #         text_tokens = processor.process_text(text)
+        #         text_input_ids, text_attention_mask = text_tokens["input_ids"].to(options.device), text_tokens["attention_mask"].to(options.device) 
+        #         text_embedding = model.get_text_features(input_ids = text_input_ids, attention_mask = text_attention_mask)
+        #         text_embedding /= text_embedding.norm(dim = -1, keepdim = True)
+        #         text_embedding = text_embedding.mean(dim = 0)
+        #         text_embedding /= text_embedding.norm()
+        #         text_embeddings.append(text_embedding)
+        #     text_embeddings = torch.stack(text_embeddings, dim = 1).to(options.device).t()
             
-            output["text_embeddings"] = text_embeddings.detach().cpu().tolist()
+        #     output["text_embeddings"] = text_embeddings.detach().cpu().tolist()
 
         for images, labels in tqdm(dataloader):
-            images, labels = images.to(options.device), labels.to(options.device)
+            # images, labels = images.to(options.device), labels.to(options.device)
+            images = images.to(options.device)
 
             image_embeddings = model.get_image_features(images)
-            image_embeddings /= image_embeddings.norm(dim = -1, keepdim = True)
+            output["un_image_embeddings"].extend(image_embeddings.detach().cpu().tolist())
 
-            output["image_embeddings"].extend(image_embeddings.detach().cpu().tolist())
-            output["labels"].extend(labels.detach().cpu().tolist())
+            # image_embeddings /= image_embeddings.norm(dim = -1, keepdim = True)
+            # output["image_embeddings"].extend(image_embeddings.detach().cpu().tolist())
+            
+            # output["labels"].extend(labels.detach().cpu().tolist())
     
     os.makedirs(os.path.dirname(options.output_file), exist_ok = True)   
     pickle.dump(output, open(options.output_file, "wb"))
