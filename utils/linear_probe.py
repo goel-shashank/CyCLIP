@@ -32,7 +32,7 @@ class LogisticRegression(torch.nn.Module):
 
 def get_dataloader(options, train):
     data = pickle.load(open(options.train_embeddings if train else options.test_embeddings, "rb"))
-    image_embeddings, labels = torch.tensor(data["image_embeddings"]), torch.tensor(data["labels"])  
+    image_embeddings, labels = torch.tensor(data["un_image_embeddings"]), torch.tensor(data["labels"])  
     dataset = torch.utils.data.TensorDataset(image_embeddings, labels)
     dataloader = torch.utils.data.DataLoader(dataset, batch_size = options.batch_size, shuffle = train, worker_init_fn = options.worker_init_fn, generator = options.generator)
     dataloader.num_samples = len(dataset)
