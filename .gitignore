@@ -1,5 +1,5 @@
 *.out
-run.sh
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -17,6 +17,7 @@ data/
 analysis/embeddings/
 checkpoints/
 logs/
+runs/
 wandb/
 build/
 develop-eggs/
