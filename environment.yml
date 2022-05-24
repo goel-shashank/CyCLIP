@@ -24,6 +24,8 @@ dependencies:
     - tensorflow
     - timm
     - tokenizers
+    - torch
+    - torchsummary
     - torchvision
     - tqdm
     - transformers
