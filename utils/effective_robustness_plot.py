@@ -49,21 +49,26 @@ for dataset in ["ImageNetV2", "ImageNetSketch", "ImageNet-A", "ImageNet-R"]:
 
     plt.xlabel("Top1 Accuracy on ImageNet1K (%)", labelpad = 12)
     plt.ylabel(f"Top1 Accuracy on {dataset} (%)", labelpad = 12)
-    xpoints = ypoints = plt.xlim()
+    xpoints = ypoints = (0, 25)
     plt.plot(xpoints, ypoints, linestyle = "--", color = "k", lw = 2, scalex = False, scaley = False, label = "y = x")
-
-    ypoints = plt.ylim()
+    
+    ypoints = (0, 21)
     xpoints = [(y + 9) / 1.2 for y in ypoints]
     plt.plot(xpoints, ypoints, linestyle = "-", color = "r", lw = 1, label = "Linear fit to\nstandard training")
 
-    plt.yticks(np.arange(5.0, 22.5, 2.5))
-    plt.xticks(np.arange(5.0, 25.0, 2.5))
-    plt.ylim(2.5, 20.0)
-    plt.xlim(2.5, 22.5)
+    # plt.yticks(np.arange(5.0, 22.5, 2.5))
+    # plt.xticks(np.arange(5.0, 25.0, 2.5))
+    # plt.ylim(2.5, 20.0)
+    # plt.xlim(2.5, 22.5)
     
+    plt.yticks(np.arange(2.5, 25.0, 2.5))
+    plt.xticks(np.arange(2.5, 25.0, 2.5))
+    plt.ylim(0, 25.0)
+    plt.xlim(0, 25.0)
+        
     plt.legend(bbox_to_anchor = (1.0, 1.05))
     plt.grid()
     plt.tight_layout()
-
+    
     os.makedirs("analysis/plots", exist_ok = True)
     plt.savefig(f"analysis/plots/effective_robustness_plot.{dataset}.png")
