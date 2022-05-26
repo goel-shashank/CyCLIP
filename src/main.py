@@ -1,6 +1,5 @@
 import os
 os.environ["WANDB_SILENT"] = "true"
-os.environ["WANDB_API_KEY"] = "b5a237c3bc440290f623cc2ba16bb43394072c0c" 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3" 
 
 import sys
