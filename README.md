@@ -1,5 +1,5 @@
 
-# Multimodal Representation Learning!
+# Cyclic Contrastive Language-Image Pretraining
 
 ## Requirements
  
@@ -10,8 +10,8 @@
 
 >Clone this repository to your local machine.
 ```bash
-git clone "git@github.com:goel-shashank/Multimodal-Representation-Learning.git"
-cd  "Multimodal-Representation-Learning"
+git clone git@github.com:goel-shashank/CyCLIP.git
+cd  CyCLIP
 ```
 
 ### Environment Setup
@@ -30,25 +30,3 @@ $ conda env create --prefix ./env -f environment.yml
 $ source activate ./env
 $ conda update --all
 ```
-
-### WandB Login
-
-> Login to wandb
-
-```bash
-$ wandb login
-```
-
----
-
-## Dataset
-
-We use the [Conceptual Captions Dataset](https://meta.wikimedia.org/wiki/Data_dump_torrents#English_Wikipedia) in this research. The following commands can be used to download the dataset.
-
-> Downloading the Conceptual Captions Dataset 
-> 
-```bash
-$ TODO
-```
-
----
