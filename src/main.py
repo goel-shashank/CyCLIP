@@ -18,8 +18,7 @@ import torch.backends.cudnn as cudnn
 from torch.cuda.amp import GradScaler
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-from pkgs.openai.clip import load as load_model_openai
-from pkgs.moein.clip import load as load_model_moein
+from pkgs.openai.clip import load as load_model
 
 from .train import train
 from .evaluate import evaluate
@@ -55,10 +54,7 @@ def worker(rank, options, logger):
     
     options.batch_size = options.batch_size // options.num_devices
 
-    if(options.moein):
-        model, processor = load_model_moein(pretrained = options.pretrained)
-    else:
-        model, processor = load_model_openai(name = options.model_name, pretrained = options.pretrained)
+    model, processor = load_model(name = options.model_name, pretrained = options.pretrained)
 
     if(options.device == "cpu"):
         model.float()
