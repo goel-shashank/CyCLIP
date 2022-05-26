@@ -17,10 +17,8 @@ regex
 scikit-image
 seaborn
 tensorflow
-timm
 tokenizers
 torch
-torchsummary
 torchvision
 tqdm
 transformers
