@@ -1,6 +1,9 @@
 
 # Cyclic Contrastive Language-Image Pretraining
 
+## Paper
+
+- [CyCLIP: Cyclic Contrastive Language-Image Pretraining](https://arxiv.org/abs/2205.14459)
 ## Requirements
  
 - Python 3.7+
