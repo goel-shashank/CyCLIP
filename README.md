@@ -27,6 +27,10 @@ The following commands create a conda environment inside the repository.
 
 > Set up the conda environment
 
+### Pretrained Checkpoints
+
+Available on [drive](https://drive.google.com/drive/u/0/folders/1K0kPJZ3MA4KAdx3Fpq25dgW59wIf7M-x)
+
 ```bash
 
 $ conda env create --prefix ./env -f environment.yml
