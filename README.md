@@ -55,3 +55,7 @@ The requirements can be directly installed without creating a conda environment.
 ```bash
 pip install -r requirements.txt
 ```
+
+## Pretrained Checkpoints
+
+You can find the pre-trained checkpoints (here)[https://drive.google.com/drive/u/0/folders/1K0kPJZ3MA4KAdx3Fpq25dgW59wIf7M-x].
