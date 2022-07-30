@@ -1,9 +1,0 @@
-image_encoder_model = "resnet50"
-image_embedding_dim = 2048
-text_encoder_model = "distilbert-base-uncased"
-text_embedding_dim = 768
-temperature = 1
-output_embedding_dim = 1024 
-dropout = 0.1
-max_sequence_length = 77
-image_size = 224

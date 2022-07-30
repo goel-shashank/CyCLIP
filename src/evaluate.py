@@ -39,49 +39,6 @@ def get_validation_metrics(model, dataloader, options):
 
     return metrics
 
-def get_backdoor_metrics(model, processor, test_dataloader, options):
-    logging.info("Started backdoor testing")
-
-    model.eval()
-    umodel = model.module if(options.distributed) else model
-
-    config = eval(open(f"{options.eval_test_data_dir}/classes.py", "r").read())
-    classes, templates = config["classes"], config["templates"]
-    assert options.backdoor_target in classes
-    backdoor_target_index = classes.index(options.backdoor_target)
-    
-    with torch.no_grad():
-        text_embeddings = []
-        for c in tqdm(classes):
-            text = [template(c) for template in templates]
-            text_tokens = processor.process_text(text)
-            text_input_ids, text_attention_mask = text_tokens["input_ids"].to(options.device), text_tokens["attention_mask"].to(options.device) 
-            text_embedding = umodel.get_text_features(input_ids = text_input_ids, attention_mask = text_attention_mask)
-            text_embedding /= text_embedding.norm(dim = -1, keepdim = True)
-            text_embedding = text_embedding.mean(dim = 0)
-            text_embedding /= text_embedding.norm()
-            text_embeddings.append(text_embedding)
-        text_embeddings = torch.stack(text_embeddings, dim = 1).to(options.device)
-
-    with torch.no_grad():       
-        probs = 0
-        scores = 0
-        
-        for image, label in tqdm(test_dataloader):
-            image, label = image.to(options.device), label.to(options.device)
-            image_embedding = umodel.get_image_features(image)
-            image_embedding /= image_embedding.norm(dim = -1, keepdim = True)
-            logits = image_embedding @ text_embeddings
-            _, indices = logits.max(dim = 1)
-            probs += torch.nn.Softmax(dim = 1)(logits)[:, backdoor_target_index].sum().squeeze().item()
-            scores += (indices == backdoor_target_index).sum().squeeze().item()
-        
-        results = {f"backdoor_success_rate": probs/test_dataloader.num_samples, f"backdoor_score": scores/test_dataloader.num_samples * 100}
-        
-    logging.info("Finished backdoor testing")
-
-    return results
-
 def get_zeroshot_metrics(model, processor, test_dataloader, options):
     logging.info("Started zeroshot testing")
 
@@ -261,13 +218,10 @@ def evaluate(epoch, model, processor, data, options):
             metrics.update(get_validation_metrics(model, data["validation"], options))
             
         if(data["eval_test"] is not None): 
-            if(options.backdoor_target is not None):
-                metrics.update(get_backdoor_metrics(model, processor, data["eval_test"], options))
-            else:   
-                if(data["eval_train"] is not None):
-                    metrics.update(get_linear_probe_metrics(model, data["eval_train"], data["eval_test"], options))
-                else:
-                    metrics.update(get_zeroshot_metrics(model, processor, data["eval_test"], options))
+            if(data["eval_train"] is not None):
+                metrics.update(get_linear_probe_metrics(model, data["eval_train"], data["eval_test"], options))
+            else:
+                metrics.update(get_zeroshot_metrics(model, processor, data["eval_test"], options))
         
         if(metrics):
             logging.info("Results")

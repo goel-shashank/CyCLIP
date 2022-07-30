@@ -22,8 +22,8 @@ dependencies:
     - scikit-image
     - seaborn
     - tensorflow
-    - timm
     - tokenizers
+    - torch
     - torchvision
     - tqdm
     - transformers
