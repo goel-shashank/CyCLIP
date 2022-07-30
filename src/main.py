@@ -19,7 +19,7 @@ from torch.cuda.amp import GradScaler
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 from pkgs.openai.clip import load as load_model_openai
-from pkgs.moein.clip import load as load_model_moein
+#from pkgs.moein.clip import load as load_model_moein
 
 from .train import train
 from .evaluate import evaluate

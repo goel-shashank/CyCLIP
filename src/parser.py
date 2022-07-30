@@ -29,7 +29,7 @@ def parse_args():
     parser.add_argument("--device_id", type = int, default = 0, help = "Specify device id if using single gpu")
     parser.add_argument("--distributed", action = "store_true", default = False, help = "Use multiple gpus if available")
     parser.add_argument("--distributed_backend", type = str, default = "nccl", help = "Distributed backend")
-    parser.add_argument("--distributed_init_method", type = str, default = "tcp://127.0.0.1:6100", help = "Distributed init method")
+    parser.add_argument("--distributed_init_method", type = str, default = "tcp://127.0.0.1:5432", help = "Distributed init method")
     parser.add_argument("--device_ids", nargs = "+", default = None, help = "Specify device ids if using multiple gpus")
     parser.add_argument("--wandb", action = "store_true", default = False, help = "Enable wandb logging")
     parser.add_argument("--notes", type = str, default = None, help = "Notes for experiment")

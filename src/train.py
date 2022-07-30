@@ -71,7 +71,6 @@ def get_loss(umodel, outputs, criterion, options):
         crossmodal_cyclic_loss = (logits_text_per_image - logits_image_per_text).square().mean() / (umodel.logit_scale.exp() * umodel.logit_scale.exp()) * batch_size
 
     cyclic_loss = options.cylambda1 * inmodal_cyclic_loss + options.cylambda2 * crossmodal_cyclic_loss
-    
     loss = contrastive_loss + cyclic_loss
     
     return loss, contrastive_loss, cyclic_loss
