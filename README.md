@@ -26,7 +26,7 @@ You can use, redistribute, and adapt the material for non-commercial purposes, a
  
 - Both Linux and Windows are supported, but we strongly recommend Linux for performance and compatibility reasons.
 - 64-bit Python 3.7+ installation. 
-- One or more high-end GPUs with at least 16GB of DRAM.
+- We used 4-8 V100s 24GB DRAM GPUs throughout our experiments.
 
 ## Setup Environment and Install dependencies
 
