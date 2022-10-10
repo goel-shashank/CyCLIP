@@ -79,7 +79,7 @@ def run(options):
     os.makedirs(options.dir, exist_ok = True)
     os.makedirs(os.path.join(options.dir, "images"), exist_ok = True)
     
-    df = pd.read_csv(options.file, sep = "\t", names = ["image", "caption"])
+    df = pd.read_csv(options.file, sep = "\t", names = [ "caption", "image"])
     df["dir"] = options.dir
     df = df[options.start:options.end]
     
@@ -91,8 +91,8 @@ if(__name__ == "__main__"):
 
     parser.add_argument("-f,--file", dest = "file", type = str, default = None, help = "File")
     parser.add_argument("-d,--dir", dest = "dir", type = str, default = None, help = "Directory")
-    parser.add_argument("-s,--start", dest = "start", type = float, default = 0, help = "Start index")
-    parser.add_argument("-e,--end", dest = "end", type = float, default = 1000000000000, help = "End index")
+    parser.add_argument("-s,--start", dest = "start", type = int, default = 0, help = "Start index")
+    parser.add_argument("-e,--end", dest = "end", type = int, default = 1000000000000, help = "End index")
 
     options = parser.parse_args()
     options.hash = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"{options.file}-{options.dir}-{options.start}-{options.end}"))
