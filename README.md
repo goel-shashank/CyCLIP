@@ -58,7 +58,8 @@ pip install -r requirements.txt
 
 ### Training 
 
-```python -m main --name exp1 --train_data <path to train csv file> --validation_data <path to valid csv file>
+```
+python -m main --name exp1 --train_data <path to train csv file> --validation_data <path to valid csv file>
 --image_key <column name of the image paths in the train/validation csv file> --caption_key <column name of the captions
 in the train/validation csv file> --device_ids "0,1,2" --distributed --cylambda1 0.25 --cylambda2 0.25 
 ```
