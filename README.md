@@ -61,7 +61,7 @@ pip install -r requirements.txt
 ```
 python -m main --name exp1 --train_data <path to train csv file> --validation_data <path to valid csv file>
 --image_key <column name of the image paths in the train/validation csv file> --caption_key <column name of the captions
-in the train/validation csv file> --device_ids "0,1,2" --distributed --cylambda1 0.25 --cylambda2 0.25 
+in the train/validation csv file> --device_ids 0 1 2 3 --distributed --cylambda1 0.25 --cylambda2 0.25 
 ```
 
 Your train/validation csv/tsv file should have 2 columns containing captions and the path to corresponding images on the machine. this script does not download the images for the captions directly. To download the images from their URL for CC3M and/or CC12M, use our `utils/download.py` script.
