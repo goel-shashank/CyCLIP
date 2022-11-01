@@ -66,6 +66,17 @@ in the train/validation csv file> --device_ids 0 1 2 3 --distributed --cylambda1
 
 Your train/validation csv/tsv file should have 2 columns containing captions and the path to corresponding images on the machine. this script does not download the images for the captions directly. To download the images from their URL for CC3M and/or CC12M, use our `utils/download.py` script.
 
+### Inference - ImageNet1K
+
+```
+python -m src.main --name <eval_imagenet_1k> --eval_data_type <dataset> --eval_test_data_dir data/ImageNet1K/validation/ --device_id 0 --checkpoint <ckpts/epoch_64.pt> 
+```
+
+For ImageNet1K: There should be a labels.csv in the test data directory that contains 2 columns -- image, label. image should have the location to the image in the local machine.
+
 ## Pretrained Checkpoints
 
 You can find the pre-trained checkpoints [here](https://drive.google.com/drive/u/0/folders/1K0kPJZ3MA4KAdx3Fpq25dgW59wIf7M-x).
+
+
+### CyCLIP has been added to [EvalAI leaderboard](https://eval.ai/web/challenges/challenge-page/1832/leaderboard/4298) under Image Classification Challenge. We highly recommend using this for benchmarking your pre-trained models. Link to their repo - https://github.com/Computer-Vision-in-the-Wild/Elevater_Toolkit_IC
