@@ -64,11 +64,11 @@ def get_loss(umodel, outputs, criterion, options):
     if(options.cylambda1 > 0):
         logits_image_per_image = umodel.logit_scale.exp() * image_embeds @ image_embeds.t()
         logits_text_per_text = umodel.logit_scale.exp() * text_embeds @ text_embeds.t()
-        inmodal_cyclic_loss = (logits_image_per_image - logits_text_per_text).square().mean() / (umodel.logit_scale.exp() * umodel.logit_scale.exp() * batch_size )
+        inmodal_cyclic_loss = (logits_image_per_image - logits_text_per_text).square().mean() / (umodel.logit_scale.exp() * umodel.logit_scale.exp()) * batch_size
     
     crossmodal_cyclic_loss = torch.tensor(0).to(options.device)
     if(options.cylambda2 > 0):
-        crossmodal_cyclic_loss = (logits_text_per_image - logits_image_per_text).square().mean() / (umodel.logit_scale.exp() * umodel.logit_scale.exp() * batch_size )
+        crossmodal_cyclic_loss = (logits_text_per_image - logits_image_per_text).square().mean() / (umodel.logit_scale.exp() * umodel.logit_scale.exp()) * batch_size
 
     cyclic_loss = options.cylambda1 * inmodal_cyclic_loss + options.cylambda2 * crossmodal_cyclic_loss
     loss = contrastive_loss + cyclic_loss
